@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "736658276257",
+    "firebase_url": "https://gsb-app-2a4ed-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "gsb-app-2a4ed",
+    "storage_bucket": "gsb-app-2a4ed.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736658276257:android:bf86acbc06f1fae4e315e0",
+        "android_client_info": {
+          "package_name": "com.gsb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBACtOrnJ8UWjaUs5aSEnZPAfBWuHaIgUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736658276257:android:e2aa1a69f6ebb066e315e0",
+        "android_client_info": {
+          "package_name": "com.gsbfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBACtOrnJ8UWjaUs5aSEnZPAfBWuHaIgUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
