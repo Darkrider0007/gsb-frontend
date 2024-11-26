@@ -5,101 +5,109 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useRef, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import Icons from '../../Icons';
 import {postData} from '../../global/server';
 import {
-  completeSignup,
   verificationFailure,
   verificationStart,
   verificationSuccess,
 } from '../../redux/authSlice';
 import {useDispatch} from 'react-redux';
-import {retrieveData, storeData} from '../../utils/Storage';
+import {storeData} from '../../utils/Storage';
 
 const Verification = () => {
-  const et1 = useRef<TextInput>(null);
-  const et2 = useRef<TextInput>(null);
-  const et3 = useRef<TextInput>(null);
-  const et4 = useRef<TextInput>(null);
-  const et5 = useRef<TextInput>(null);
-  const et6 = useRef<TextInput>(null);
-
-  const [otp, setOtp] = useState({
-    otp1: '',
-    otp2: '',
-    otp3: '',
-    otp4: '',
-    otp5: '',
-    otp6: '',
-  });
-
+  const inputRefs = Array(6)
+    .fill(null)
+    .map(() => useRef<TextInput>(null));
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [resendEnabled, setResendEnabled] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
   const {phoneNumber} = route.params as {phoneNumber: string};
   const dispatch = useDispatch();
 
   const handleVerify = async () => {
-    const fullOtp = `${otp.otp1}${otp.otp2}${otp.otp3}${otp.otp4}${otp.otp5}${otp.otp6}`;
+    const fullOtp = otp.join('');
     if (fullOtp.length === 6) {
       try {
-        dispatch(verificationStart()); // Dispatch verification start action
+        dispatch(verificationStart());
+
         const response = await postData(
           '/api/auth/verify-otp',
           {phone: phoneNumber, otp: fullOtp},
           null,
           null,
         );
-        console.log(response);
 
         if (response.success) {
-          // Store the token in AsyncStorage
+          // Store token and user ID
           await storeData('token', response.token);
           await storeData('userId', response._id);
 
-          dispatch(verificationSuccess(response)); // Dispatch verification success action with user data
+          dispatch(verificationSuccess(response));
 
-          if (response.user.name) {
-            navigation.navigate('Age');
-          } else {
+          // Navigate based on backend response
+          if (response.firstTimeLogin) {
             navigation.navigate('Name');
+          } else {
+            navigation.navigate('Home');
           }
         } else {
-          dispatch(verificationFailure()); // Dispatch verification failure action
-          alert('OTP verification failed. Please try again.');
+          dispatch(verificationFailure());
+          alert(response.message || 'OTP verification failed. Please try again.');
         }
       } catch (error: any) {
-        dispatch(verificationFailure()); // Dispatch verification failure action
+        dispatch(verificationFailure());
         console.error(
           'OTP verification error:',
           error.response ? error.response.data : error.message,
         );
+        alert('An error occurred during OTP verification. Please try again.');
       }
     } else {
       alert('Please enter the complete OTP.');
     }
   };
 
-  const handleChange = (text, currentRef, nextRef, pos) => {
-    setOtp(prevOtp => ({...prevOtp, [pos]: text}));
-    if (text.length >= 1 && nextRef) {
-      nextRef.current?.focus();
-    } else if (text.length < 1 && currentRef) {
-      currentRef.current?.focus();
+  const handleChange = (text: string, index: number) => {
+    const updatedOtp = [...otp];
+    updatedOtp[index] = text;
+    setOtp(updatedOtp);
+
+    // Focus next input or stay on the current one if backspacing
+    if (text && index < 5) {
+      inputRefs[index + 1].current?.focus();
+    } else if (!text && index > 0) {
+      inputRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleResend = async () => {
+    setResendEnabled(false);
+    try {
+      const response = await postData('/api/auth/phone-login', {phone: phoneNumber});
+      if (response.success) {
+        alert('OTP resent successfully.');
+      } else {
+        alert(response.message || 'Failed to resend OTP. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Resend OTP error:', error.response ? error.response.data : error.message);
+      alert('An error occurred while resending OTP. Please try again.');
+    } finally {
+      // Enable resend button after 30 seconds
+      setTimeout(() => setResendEnabled(true), 30000);
     }
   };
 
   return (
     <View style={styles.container}>
-      <View>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.goBack();
-          }}>
-          <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Icons.AntDesign name="arrowleft" size={25} color="black" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Verify Account</Text>
       <Text style={styles.subtitle}>
         Verify your account by entering the verification code we sent to{' '}
@@ -107,57 +115,27 @@ const Verification = () => {
       </Text>
 
       <View style={styles.otpView}>
-        <TextInput
-          ref={et1}
-          style={styles.inputView}
-          maxLength={1}
-          keyboardType="phone-pad"
-          value={otp.otp1}
-          onChangeText={text => handleChange(text, null, et2, 'otp1')}
-        />
-        <TextInput
-          ref={et2}
-          style={styles.inputView}
-          maxLength={1}
-          keyboardType="phone-pad"
-          value={otp.otp2}
-          onChangeText={text => handleChange(text, et1, et3, 'otp2')}
-        />
-        <TextInput
-          ref={et3}
-          style={styles.inputView}
-          maxLength={1}
-          keyboardType="phone-pad"
-          value={otp.otp3}
-          onChangeText={text => handleChange(text, et2, et4, 'otp3')}
-        />
-        <TextInput
-          ref={et4}
-          style={styles.inputView}
-          maxLength={1}
-          keyboardType="phone-pad"
-          value={otp.otp4}
-          onChangeText={text => handleChange(text, et3, et5, 'otp4')}
-        />
-        <TextInput
-          ref={et5}
-          style={styles.inputView}
-          maxLength={1}
-          keyboardType="phone-pad"
-          value={otp.otp5}
-          onChangeText={text => handleChange(text, et4, et6, 'otp5')}
-        />
-        <TextInput
-          ref={et6}
-          style={styles.inputView}
-          maxLength={1}
-          keyboardType="phone-pad"
-          value={otp.otp6}
-          onChangeText={text => handleChange(text, et5, null, 'otp6')}
-        />
+        {inputRefs.map((ref, index) => (
+          <TextInput
+            key={index}
+            ref={ref}
+            style={styles.inputView}
+            maxLength={1}
+            keyboardType="phone-pad"
+            value={otp[index]}
+            onChangeText={text => handleChange(text, index)}
+          />
+        ))}
       </View>
 
-      <Text style={styles.resend}>Resend</Text>
+      <TouchableOpacity
+        onPress={handleResend}
+        disabled={!resendEnabled}
+      >
+        <Text style={[styles.resend, !resendEnabled && styles.resendDisabled]}>
+          Resend
+        </Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={handleVerify}>
         <Text style={styles.buttonText}>Verify</Text>
@@ -183,35 +161,38 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: 'black',
+    marginVertical: 20,
   },
   otpView: {
-    width: '100%',
-    justifyContent: 'center',
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: '40%',
-    // backgroundColor: 'red',
+    marginTop: 40,
   },
   inputView: {
     height: 40,
     width: 40,
     borderWidth: 1,
-    marginLeft: 5,
+    marginHorizontal: 5,
     borderRadius: 10,
     textAlign: 'center',
     color: 'black',
+    fontSize: 18,
   },
   resend: {
     textAlign: 'center',
     color: 'blue',
     marginTop: 10,
   },
+  resendDisabled: {
+    color: 'gray',
+  },
   button: {
     backgroundColor: '#F6AF24',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: '20%',
+    marginTop: 50,
   },
   buttonText: {
     color: 'white',

@@ -45,12 +45,18 @@ import Message from '../pages/Message';
 import DailyUpdates from '../pages/DailyUpdates';
 import AddDailyUpdate from '../pages/AddDailyUpdate';
 import SingleSupplement from '../pages/SingleSupplement';
+import FirstScreen from '../pages/firstScreen';
+import SecondScreen from '../pages/secondScreen';
+import SignIn from '../pages/signingUp/SignIn';
 
 const Stack = createNativeStackNavigator();
 
 const PreAuthStack = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Screen name='FirstScreen' component={FirstScreen} />
+    <Stack.Screen name='SecondScreen' component={SecondScreen} />
     <Stack.Screen name="SignUp" component={SignUp} />
+    <Stack.Screen name="SignIn" component={SignIn} />
     <Stack.Screen name="Verification" component={Verification} />
   </Stack.Navigator>
 );
