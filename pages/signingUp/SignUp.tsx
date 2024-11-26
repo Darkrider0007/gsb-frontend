@@ -8,21 +8,22 @@ import {
   TouchableOpacity,
   View,
   useColorScheme,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
-import React, {useState} from 'react';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+import React, { useState } from 'react';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 import Carousel from '../../components/Carousel';
 import countryFlag from '../../assets/india.png';
-
 import appleLogo from '../../assets/apple.png';
 import googleLogo from '../../assets/google.png';
 import fbLogo from '../../assets/fb.png';
-import {useNavigation} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {signupFailure, signupStart, signupSuccess} from '../../redux/authSlice';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { signupFailure, signupStart, signupSuccess } from '../../redux/authSlice';
 import axios from 'axios';
-import {postData} from '../../global/server';
-import {RootState} from '../../redux/store';
+import { postData } from '../../global/server';
+import { RootState } from '../../redux/store';
 
 const SignUp = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -35,27 +36,41 @@ const SignUp = () => {
   const navigation = useNavigation();
 
   const dispatch = useDispatch();
-  const {isFetching, error, isAuth} = useSelector(
+  const { isFetching, error, isAuth } = useSelector(
     (state: RootState) => state.auth,
   );
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSignUp = async () => {
+    setIsLoading(true); // Start loading
     console.log('Signing Up');
     console.log(phoneNumber);
     dispatch(signupStart());
+
     try {
       const res = await postData(
         '/api/auth/phone-login',
-        {phone: `+91${phoneNumber}`},
+        { phone: `+91${phoneNumber}` },
         null,
         null,
       );
       console.log(res);
       dispatch(signupSuccess(res?.data));
-      navigation.navigate('Verification', {phoneNumber: `+91${phoneNumber}`});
+      const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
+      if (cleanNumber.length >= 10) {
+      navigation.navigate('Verification', { phoneNumber: `+91${phoneNumber}` });
+    } else {
+      Alert.alert(
+        'Invalid Phone Number',
+        'Please enter a valid phone number with at least 10 digits'
+      );
+    }
     } catch (err) {
       dispatch(signupFailure());
       console.log(err);
+    } finally {
+      setIsLoading(false); // Stop loading whether success or failure
     }
   };
 
@@ -63,10 +78,10 @@ const SignUp = () => {
     <SafeAreaView>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        translucent backgroundColor="transparent"
       />
 
-      <View style={{position: 'relative', height: '100%'}}>
+      <View style={{ position: 'relative', height: '100%' }}>
         <Carousel />
         <View style={styles.bottomContainer}>
           <Text style={styles.sectionTitle}>Phone Number</Text>
@@ -86,27 +101,35 @@ const SignUp = () => {
           </View>
           {/* Button */}
           <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              handleSignUp();
-            }}>
-            <Text style={styles.buttonText}>Get Started</Text>
+            style={[
+              styles.button,
+              // Optional: add disabled style
+              isLoading && { opacity: 0.7 }
+            ]}
+            disabled={isLoading}
+            onPress={handleSignUp}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={styles.buttonText}>Get Started</Text>
+            )}
           </TouchableOpacity>
           {/* Logos and Text */}
           <Text style={styles.footerText}>On Connect With</Text>
           <View style={styles.logosContainer}>
             {/* Three logos go here */}
             <Image source={googleLogo} style={styles.logo} />
-            <Image source={appleLogo} style={styles.logo} />
+            <Image source={appleLogo} style={styles.logo1} />
             <Image source={fbLogo} style={styles.logo} />
           </View>
           <Text style={styles.footerText}>
             By continuing you agree to the{' '}
-            <Text style={{color: '#FFA800', fontWeight: 'bold'}}>
+            <Text style={{ color: '#FFA800', fontWeight: 'bold' }}>
               Term of service
             </Text>{' '}
             and{' '}
-            <Text style={{color: '#FFA800', fontWeight: 'bold'}}>Policies</Text>
+            <Text style={{ color: '#FFA800', fontWeight: 'bold' }}>Policies</Text>
           </Text>
         </View>
       </View>
@@ -139,6 +162,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     borderTopLeftRadius: 30,
     padding: 20,
+
   },
   sectionTitle: {
     fontSize: 20,
@@ -181,12 +205,19 @@ const styles = StyleSheet.create({
   logosContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: 25,
     marginBottom: 10,
+    alignItems: 'center',
+
   },
   logo: {
     width: 24,
     height: 25,
+    // Add other styles for your logos
+  },
+  logo1: {
+    width: 24,
+    height: 30,
     // Add other styles for your logos
   },
   footerText: {

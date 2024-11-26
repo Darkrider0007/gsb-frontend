@@ -4,6 +4,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -11,29 +12,28 @@ import Icons from '../../Icons';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../redux/store';
 import {retrieveData} from '../../utils/Storage';
-import {BASE_URL, postData} from '../../global/server';
+import {BASE_URL} from '../../global/server';
 import axios from 'axios';
 
 const Name = () => {
   const navigation = useNavigation();
-
   const [name, setName] = useState<string>('');
-
-  const [token, setToken] = useState<string>(''); // State to store token
-  const userId = useSelector((state: RootState) => state.auth.user?._id); // Fetch user ID from Redux store, corrected property access
-  const storedName = useSelector((state: RootState) => state.auth?.user?.name); // Fetch user name from Redux store
+  const [error, setError] = useState<string>('');
+  const [token, setToken] = useState<string>('');
+  const userId = useSelector((state: RootState) => state.auth.user?._id);
+  const storedName = useSelector((state: RootState) => state.auth?.user?.name);
 
   useFocusEffect(
     React.useCallback(() => {
       if (storedName) {
-        navigation.navigate('Age'); // If name is already in Redux store, navigate to next screen
+        navigation.navigate('Age');
       }
     }, [storedName, navigation]),
   );
 
   useEffect(() => {
     const getToken = async () => {
-      const storedToken = await retrieveData('token'); // Retrieve token from AsyncStorage
+      const storedToken = await retrieveData('token');
       setToken(storedToken);
     };
     getToken();
@@ -41,43 +41,51 @@ const Name = () => {
 
   const handleNameChange = (text: string) => {
     setName(text);
+    setError(''); // Clear error when user starts typing
   };
 
-  console.log(token);
-  console.log(userId);
+  const validateName = () => {
+    if (!name.trim()) {
+      setError('Please enter your name');
+      return false;
+    }
+    if (name.trim().length < 2) {
+      setError('Name must be at least 2 characters long');
+      return false;
+    }
+    return true;
+  };
 
   const handleNextStep = async () => {
-    const url = `${BASE_URL}/api/user/${userId}`;
+    if (!validateName()) {
+      Alert.alert('Error', 'Please enter a valid name to continue');
+      return;
+    }
 
-    console.log(url);
+    const url = `${BASE_URL}/api/user/${userId}`;
 
     try {
       const response = await axios.put(
         url,
-        {name},
+        {name: name.trim()},
         {headers: {token: `Bearer ${token}`}},
       );
-      console.log('Response from update:', response); // Add this line
-      if (response) {
+      
+      if (response?.data) {
         navigation.navigate('Age');
       } else {
-        console.error('Failed to update user data:', response);
+        setError('Failed to update user data');
       }
     } catch (error) {
       console.error('Error updating user:', error);
+      setError('An error occurred while saving your name');
+      Alert.alert('Error', 'Failed to save your name. Please try again.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={{marginBottom: 10}}>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.goBack();
-          }}>
-          <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
-        </TouchableOpacity>
-      </View>
+      <View style={{marginBottom: 10}} />
       <Text style={styles.subtitle}>Step 3 of 8</Text>
       <Text style={styles.title}>What's your Name?</Text>
 
@@ -93,7 +101,7 @@ const Name = () => {
             Write your Name
           </Text>
         </View>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, error ? styles.inputError : null]}>
           <TextInput
             style={styles.input}
             onChangeText={handleNameChange}
@@ -102,9 +110,16 @@ const Name = () => {
             placeholderTextColor={'black'}
           />
         </View>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+      <TouchableOpacity 
+        style={[
+          styles.button, 
+          !name.trim() ? styles.buttonDisabled : null
+        ]} 
+        onPress={handleNextStep}
+      >
         <Text style={styles.buttonText}>Next Step</Text>
       </TouchableOpacity>
     </View>
@@ -128,12 +143,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '500',
-    // paddingLeft: 20,
     color: 'black',
   },
   subtitle: {
     fontSize: 16,
-    // paddingLeft: 20,
     color: 'black',
   },
   button: {
@@ -143,25 +156,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: '20%',
   },
+  buttonDisabled: {
+    backgroundColor: '#F6AF2480', // Adding opacity to show disabled state
+  },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-
-  toggleButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#eee',
-    borderRadius: 20,
-    width: '30%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  toggleButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -173,16 +174,18 @@ const styles = StyleSheet.create({
     width: '80%',
     justifyContent: 'center',
   },
+  inputError: {
+    borderColor: 'red',
+  },
   input: {
     width: '100%',
     height: 40,
     paddingHorizontal: 10,
     color: 'black',
   },
-  unit: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
+  errorText: {
+    color: 'red',
+    marginTop: 5,
+    fontSize: 14,
   },
 });

@@ -9,7 +9,7 @@ const Splash = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      navigation.navigate('SignUp');
+      navigation.navigate('FirstScreen');
     }, 4000); // Adjust timeout to match video duration
 
     // Clean up the timeout when the component unmounts or when the effect runs again
@@ -22,7 +22,7 @@ const Splash = () => {
         source={splashVideo} // Provide the source of your splash video
         resizeMode="cover"
         style={StyleSheet.absoluteFillObject} // Make the video fullscreen
-        onEnd={() => navigation.replace('SignUp')} // Navigate to 'SignUp' screen when the video ends
+        onEnd={() => navigation.replace('FirstScreen')} // Navigate to 'SignUp' screen when the video ends
       />
     </View>
   );

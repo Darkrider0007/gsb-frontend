@@ -40,21 +40,21 @@ const Carousel = () => {
   const carouselData = [
     {
       id: '01',
-      image: require('../assets/slide3.png'),
-      topText: 'DOCTOR & DIETICIAN CONULT',
-      bottomText: 'PERSONALIZED',
+      image: require('../assets/2Slide1.png'),
+      topText: 'REVERSE YOUR',
+      bottomText: 'IBS & IBD',
     },
     {
       id: '02',
-      image: require('../assets/slide2.png'),
-      topText: 'REVERSE YOUR',
-      bottomText: 'DIABETES',
+      image: require('../assets/2Slide2.png'),
+      topText: 'NON DRUG',
+      bottomText: 'TREATMENT',
     },
     {
       id: '03',
-      image: require('../assets/slide1.png'),
-      topText: 'OPTIMIZE YOUR',
-      bottomText: 'NUTRITION',
+      image: require('../assets/2Slide3.png'),
+      topText: 'DOCTOR & DIETICIAN',
+      bottomText: 'CONSULTATION',
     },
   ];
 
