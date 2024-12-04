@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
@@ -10,6 +11,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import Icons from '../../Icons';
 import {postData} from '../../global/server';
 import {
+  completeSignup,
   verificationFailure,
   verificationStart,
   verificationSuccess,
@@ -28,9 +30,12 @@ const Verification = () => {
   const {phoneNumber} = route.params as {phoneNumber: string};
   const dispatch = useDispatch();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleVerify = async () => {
     const fullOtp = otp.join('');
     if (fullOtp.length === 6) {
+      setIsLoading(true);
       try {
         dispatch(verificationStart());
 
@@ -41,6 +46,8 @@ const Verification = () => {
           null,
         );
 
+        console.log(response);
+
         if (response.success) {
           // Store token and user ID
           await storeData('token', response.token);
@@ -49,14 +56,18 @@ const Verification = () => {
           dispatch(verificationSuccess(response));
 
           // Navigate based on backend response
-          if (response.firstTimeLogin) {
-            navigation.navigate('Name');
+          if (response.firstTimeLogin === false) {
+            dispatch(completeSignup());
+            storeData('isAuth', true);
+            navigation.navigate('TabNavigator');
           } else {
-            navigation.navigate('Home');
+            navigation.navigate('Name');
           }
         } else {
           dispatch(verificationFailure());
-          alert(response.message || 'OTP verification failed. Please try again.');
+          alert(
+            response.message || 'OTP verification failed. Please try again.',
+          );
         }
       } catch (error: any) {
         dispatch(verificationFailure());
@@ -65,6 +76,8 @@ const Verification = () => {
           error.response ? error.response.data : error.message,
         );
         alert('An error occurred during OTP verification. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     } else {
       alert('Please enter the complete OTP.');
@@ -87,14 +100,19 @@ const Verification = () => {
   const handleResend = async () => {
     setResendEnabled(false);
     try {
-      const response = await postData('/api/auth/phone-login', {phone: phoneNumber});
+      const response = await postData('/api/auth/phone-login', {
+        phone: phoneNumber,
+      });
       if (response.success) {
         alert('OTP resent successfully.');
       } else {
         alert(response.message || 'Failed to resend OTP. Please try again.');
       }
     } catch (error: any) {
-      console.error('Resend OTP error:', error.response ? error.response.data : error.message);
+      console.error(
+        'Resend OTP error:',
+        error.response ? error.response.data : error.message,
+      );
       alert('An error occurred while resending OTP. Please try again.');
     } finally {
       // Enable resend button after 30 seconds
@@ -128,17 +146,21 @@ const Verification = () => {
         ))}
       </View>
 
-      <TouchableOpacity
-        onPress={handleResend}
-        disabled={!resendEnabled}
-      >
+      <TouchableOpacity onPress={handleResend} disabled={!resendEnabled}>
         <Text style={[styles.resend, !resendEnabled && styles.resendDisabled]}>
           Resend
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleVerify}>
-        <Text style={styles.buttonText}>Verify</Text>
+      <TouchableOpacity
+        disabled={isLoading}
+        style={[styles.button, {opacity: isLoading ? 0.7 : 1}]}
+        onPress={handleVerify}>
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" size="small" />
+        ) : (
+          <Text style={styles.buttonText}>Verify</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -200,3 +222,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+function alert(arg0: string) {
+  throw new Error('Function not implemented.');
+}

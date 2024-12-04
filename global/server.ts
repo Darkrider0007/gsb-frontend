@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // export const BASE_URL = 'https://gsb-backend-fs0t.onrender.com';
-export const BASE_URL = 'http://172.21.144.1:5000';
+export const BASE_URL = 'http://192.168.1.6:5000';
 
 export const getData = async (url: string, token: string | null) => {
   let headerObj = {};
@@ -43,7 +43,6 @@ export const postData = async (
     const response = await axios.post(`${BASE_URL}${url}`, data, {
       headers: headerObj,
     });
-    console.log(response);
     return response.data;
   } catch (error) {
     console.log(error);
