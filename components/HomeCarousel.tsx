@@ -9,15 +9,13 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import {Color} from '../assets/constants/Color';
 
-import logo from '../assets/gsb.png';
-
-const CarouselCopy = () => {
+const HomeCarousel = () => {
   const flatlistRef = useRef<FlatList<any>>(null);
   const screenWidth = Dimensions.get('window').width;
   const screenHeight = Dimensions.get('window').height;
-  const carouselHeight = screenHeight * 0.6;
+  const carouselHeight = screenHeight * 0.2;
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -40,21 +38,27 @@ const CarouselCopy = () => {
   const carouselData = [
     {
       id: '01',
-      image: require('../assets/3Slide1.png'),
-      topText: 'REVERSE YOUR',
-      bottomText: 'IBS & IBD',
+      image: require('../assets/home/home1.png'),
     },
     {
       id: '02',
-      image: require('../assets/3Slide2.png'),
-      topText: 'NON DRUG',
-      bottomText: 'TREATMENT',
+      image: require('../assets/home/home2.png'),
     },
     {
       id: '03',
-      image: require('../assets/3Slide3.png'),
-      topText: 'DOCTOR & DIETICIAN',
-      bottomText: 'CONSULTATION',
+      image: require('../assets/home/home3.png'),
+    },
+    {
+      id: '04',
+      image: require('../assets/home/home4.png'),
+    },
+    {
+      id: '05',
+      image: require('../assets/home/home5.png'),
+    },
+    {
+      id: '06',
+      image: require('../assets/home/home6.png'),
     },
   ];
 
@@ -63,12 +67,16 @@ const CarouselCopy = () => {
       <View>
         <Image
           source={item.image}
-          style={{height: carouselHeight, width: screenWidth}}
+          style={{
+            height: carouselHeight,
+            width: screenWidth - 40,
+            marginHorizontal: 20,
+          }}
         />
-        <LinearGradient
+        {/* <LinearGradient
           colors={['transparent', 'rgba(255, 170, 0, 1.0)']}
           style={styles.gradientOverlay}
-        />
+        /> */}
         <View style={styles.textContainer}>
           <Text style={styles.blackText}>{item.topText}</Text>
           <Text style={styles.goldenText}>{item.bottomText}</Text>
@@ -84,18 +92,22 @@ const CarouselCopy = () => {
   };
 
   const renderDotIndicators = () => {
-    return carouselData.map((_, index) => (
-      <View
-        key={index}
-        style={{
-          backgroundColor: activeIndex === index ? 'white' : 'gray',
-          height: 5,
-          width: 40,
-          // borderRadius: 5,
-          marginHorizontal: 6,
-        }}
-      />
-    ));
+    return (
+      <View style={styles.dotIndicatorsContainer}>
+        {carouselData.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dotIndicator,
+              {
+                backgroundColor:
+                  activeIndex === index ? Color.BrightOrange : Color.LightGray,
+              },
+            ]}
+          />
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -110,35 +122,17 @@ const CarouselCopy = () => {
         pagingEnabled
         onScroll={handleScroll}
       />
-      {/* <View
-                style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    marginTop: 30,
-                }}
-            >
-                {renderDotIndicators()}
-            </View> */}
-      <View style={styles.dotIndicatorsContainer}>
-        {carouselData.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dotIndicator,
-              {backgroundColor: activeIndex === index ? 'white' : 'gray'},
-            ]}
-          />
-        ))}
-      </View>
 
-      <View style={styles.logoContainer}>
+      {renderDotIndicators()}
+
+      {/* <View style={styles.logoContainer}>
         <Image source={logo} />
-      </View>
+      </View> */}
     </View>
   );
 };
 
-export default CarouselCopy;
+export default HomeCarousel;
 
 const styles = StyleSheet.create({
   imageContainer: {
@@ -152,17 +146,14 @@ const styles = StyleSheet.create({
     height: '30%',
   },
   dotIndicatorsContainer: {
-    position: 'absolute',
-    bottom: 40, // Adjust this value as per your need
-    left: 0,
-    right: 0,
+    marginTop: 10, // Positioned below the image
     flexDirection: 'row',
     justifyContent: 'center',
   },
   dotIndicator: {
-    width: 50,
-    height: 3,
-    // borderRadius: 5,
+    width: 10, // Circular size
+    height: 10, // Circular size
+    borderRadius: 5, // Makes it circular
     marginHorizontal: 6,
   },
   textContainer: {

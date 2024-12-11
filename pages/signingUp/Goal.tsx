@@ -1,200 +1,202 @@
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+// Goal.tsx
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import axios from 'axios';
 import Icons from '../../Icons';
 import weight from '../../assets/weightMachine.png';
 import mental from '../../assets/mentalHealth.png';
-import {useDispatch, useSelector} from 'react-redux';
 import {completeSignup} from '../../redux/authSlice';
 import {BASE_URL} from '../../global/server';
-import axios from 'axios';
 import {RootState} from '../../redux/store';
 import {retrieveData, storeData} from '../../utils/Storage';
 
 const Goal = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [token, setToken] = useState<string>(''); // State to store token
-  const userId = useSelector((state: RootState) => state.auth.user?._id); // Fetch user ID from Redux storeconst {userId, token} = useSelector(state => state.auth); // Assume auth state has userId and token
+  const [token, setToken] = useState<string>('');
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const userId = useSelector((state: RootState) => state.auth.user?._id);
+
+  const goalToFormMapping = {
+    "IBS Colitis & Crohn's": 'FirstForm',
+    Diabetes: 'SecondForm',
+    'Mental Depression': 'ThirdForm',
+    'E-Commerce': null,
+  };
+
   useEffect(() => {
     const getToken = async () => {
-      const storedToken = await retrieveData('token'); // Retrieve token from AsyncStorage
+      const storedToken = await retrieveData('token');
       setToken(storedToken);
     };
     getToken();
   }, []);
 
-  const handleGoalSelection = async (goal: string, navigateTo: string) => {
-    const url = `${BASE_URL}/api/user/${userId}`;
-    console.log(url);
+  const toggleGoalSelection = (goal: string) => {
+    setSelectedGoals(prev =>
+      prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal],
+    );
+  };
 
-    try {
-      const response = await axios.put(
-        url,
-        {goal},
-        {headers: {token: `Bearer ${token}`}},
-      );
-      console.log('Response from update:', response);
+  const getFormForGoal = (goal: string) => {
+    return goalToFormMapping[goal];
+  };
 
-      if (response.status === 200) {
-        if (navigateTo === 'FirstForm') {
-          navigation.navigate('FirstForm', {goal});
-        } else {
-          dispatch(completeSignup());
-          await storeData('isAuth', true);
+  const navigateToNextSelectedGoal = async (index = 0) => {
+    if (index < selectedGoals.length) {
+      const currentGoal = selectedGoals[index];
+      const url = `${BASE_URL}/api/user/${userId}`;
 
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'TabNavigator'}],
-          });
+      try {
+        const response = await axios.put(
+          url,
+          {goal: currentGoal},
+          {headers: {token: `Bearer ${token}`}},
+        );
+
+        if (response.status === 200) {
+          const formName = goalToFormMapping[currentGoal];
+
+          if (formName) {
+            navigation.navigate(formName as never, {
+              goal: currentGoal,
+              nextIndex: index + 1,
+              selectedGoals: selectedGoals
+                .map(goal => {
+                  switch (goalToFormMapping[goal]) {
+                    case 'FirstForm':
+                      return 1;
+                    case 'SecondForm':
+                      return 2;
+                    case 'ThirdForm':
+                      return 3;
+                    default:
+                      return 0;
+                  }
+                })
+                .filter(num => num !== 0),
+              onReturn: () => navigateToNextSelectedGoal(index + 1),
+            });
+          } else {
+            navigateToNextSelectedGoal(index + 1);
+          }
         }
-      } else {
-        console.error('Failed to update user data:', response);
+      } catch (error) {
+        console.error('Error updating user:', error);
       }
-    } catch (error) {
-      console.error('Error updating user:', error);
+    } else {
+      dispatch(completeSignup());
+      await storeData('isAuth', true);
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'TabNavigator'}],
+      });
     }
   };
+
+  const goalOptions = [
+    {
+      id: "IBS Colitis & Crohn's",
+      image: weight,
+      type: 'image',
+      form: 'FirstForm',
+    },
+    {
+      id: 'Diabetes',
+      icon: 'diabetes',
+      type: 'icon',
+      form: 'SecondForm',
+    },
+    {
+      id: 'Mental Depression',
+      image: mental,
+      type: 'image',
+      form: 'ThirdForm',
+    },
+    {
+      id: 'E-Commerce',
+      icon: 'shopping-bag',
+      type: 'icon',
+      form: null,
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={{marginBottom: 10}}>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.goBack();
-          }}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
-        {/* <Text style={styles.subtitle}>Step 7 of 8</Text> */}
         <Text style={styles.title}>What's your goal?</Text>
         <Text style={{color: 'black', fontSize: 16, marginVertical: 10}}>
-          you can change more than one. Don’t worry, you can always change it
+          You can select more than one. Don't worry, you can always change it
           later
         </Text>
       </View>
 
       <View style={{flexDirection: 'column', gap: 40}}>
-        <TouchableOpacity
-          onPress={() => {
-            handleGoalSelection("IBS Colitis & Crohn's", 'FirstForm');
-          }}
-          style={{
-            borderColor: 'black',
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 10,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 10,
-          }}>
-          <Image source={weight} style={{width: 20, height: 20}} />
-          <Text style={{fontSize: 16, fontWeight: '600', color: 'black'}}>
-            IBS Colitis & Crohn's
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            handleGoalSelection('Diabetes', 'FirstForm');
-          }}
-          style={{
-            borderColor: 'black',
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 10,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 10,
-          }}>
-          <Icons.MaterialCommunityIcons
-            name="diabetes"
-            size={25}
-            color={'black'}
-          />
-          <Text style={{fontSize: 16, fontWeight: '600', color: 'black'}}>
-            Diabetes
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            handleGoalSelection('Mental Depression', 'TabNavigator');
-          }}
-          style={{
-            borderColor: 'black',
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 10,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 10,
-          }}>
-          <Image source={mental} style={{width: 22, height: 20}} />
-          <Text style={{fontSize: 16, fontWeight: '600', color: 'black'}}>
-            Mental Depression
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            handleGoalSelection('E-Commerce', 'TabNavigator');
-          }}
-          style={{
-            borderColor: 'black',
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 10,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 10,
-          }}>
-          <Icons.Feather name="shopping-bag" size={20} color={'black'} />
-          <Text style={{fontSize: 16, fontWeight: '600', color: 'black'}}>
-            E-Commerce
-          </Text>
-        </TouchableOpacity>
+        {goalOptions.map(goal => (
+          <TouchableOpacity
+            key={goal.id}
+            onPress={() => toggleGoalSelection(goal.id)}
+            style={[
+              styles.goalOption,
+              selectedGoals.includes(goal.id) && {
+                backgroundColor: '#D9D9D9',
+              },
+            ]}>
+            {goal.type === 'image' ? (
+              <Image source={goal.image} style={{width: 20, height: 20}} />
+            ) : goal.id === 'Diabetes' ? (
+              <Icons.MaterialCommunityIcons
+                name={goal.icon}
+                size={25}
+                color={'black'}
+              />
+            ) : (
+              <Icons.Feather name={goal.icon} size={20} color={'black'} />
+            )}
+            <Text style={styles.goalText}>{goal.id}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'TabNavigator'}],
-          });
-        }}>
+        style={[styles.button, {opacity: selectedGoals.length === 0 ? 0.5 : 1}]}
+        disabled={selectedGoals.length === 0}
+        onPress={() => navigateToNextSelectedGoal()}>
         <Text style={styles.buttonText}>Next Step</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-export default Goal;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
     justifyContent: 'space-between',
-  },
-  subcontainer: {
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'column',
-    justifyContent: 'center',
+    backgroundColor: 'white',
   },
   title: {
     fontSize: 30,
     fontWeight: '500',
-    // paddingLeft: 20,
     color: 'black',
   },
-  subtitle: {
+  goalOption: {
+    borderColor: 'black',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  goalText: {
     fontSize: 16,
-    // paddingLeft: 20,
+    fontWeight: '600',
     color: 'black',
   },
   button: {
@@ -209,41 +211,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
-  toggleButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#eee',
-    borderRadius: 20,
-    width: '30%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  toggleButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    width: '60%',
-    justifyContent: 'center',
-  },
-  input: {
-    width: 50,
-    height: 40,
-    paddingHorizontal: 10,
-    color: 'black',
-  },
-  unit: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
-  },
 });
+
+export default Goal;

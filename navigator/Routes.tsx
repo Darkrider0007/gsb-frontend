@@ -21,7 +21,7 @@ import Education from '../pages/Education';
 import Nutrition from '../pages/Nutrition';
 import Services from '../pages/Services';
 import Consultant from '../pages/Consultant';
-import Supplement from '../pages/Supplement';
+// import Supplement from '../pages/Supplement';
 import Fitness from '../pages/Fitness';
 import GetStarted from '../pages/signingUp/GetStarted';
 import Goal from '../pages/signingUp/Goal';
@@ -48,13 +48,22 @@ import SingleSupplement from '../pages/SingleSupplement';
 import FirstScreen from '../pages/firstScreen';
 import SecondScreen from '../pages/secondScreen';
 import SignIn from '../pages/signingUp/SignIn';
+import SecondForm from '../pages/signingUp/SecondForm';
+import ThirdForm from '../pages/signingUp/ThirdForm';
+import IBSForm from '../pages/IBSForm';
+import DiabeticForm from '../pages/DiabeticForm';
+import MentalStressForm from '../pages/MentalStressForm';
+import Supplements from '../pages/Supplements';
+import Astrology from '../pages/Astrology';
+import Horroscope from '../pages/Horroscope';
+import VideoPlayer from '../components/Fitness/VideoPlayer';
 
 const Stack = createNativeStackNavigator();
 
 const PreAuthStack = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name='FirstScreen' component={FirstScreen} />
-    <Stack.Screen name='SecondScreen' component={SecondScreen} />
+    <Stack.Screen name="FirstScreen" component={FirstScreen} />
+    <Stack.Screen name="SecondScreen" component={SecondScreen} />
     <Stack.Screen name="SignUp" component={SignUp} />
     <Stack.Screen name="SignIn" component={SignIn} />
     <Stack.Screen name="Verification" component={Verification} />
@@ -71,6 +80,8 @@ const PostVerificationStack = () => (
     <Stack.Screen name="GetStarted" component={GetStarted} />
     <Stack.Screen name="Goal" component={Goal} />
     <Stack.Screen name="FirstForm" component={FirstForm} />
+    <Stack.Screen name="SecondForm" component={SecondForm} />
+    <Stack.Screen name="ThirdForm" component={ThirdForm} />
   </Stack.Navigator>
 );
 
@@ -93,10 +104,17 @@ const PostAuthStack = () => (
     <Stack.Screen name="MySuccessStories" component={MySuccessStories} />
     <Stack.Screen name="AddMySuccessStory" component={AddMySuccessStory} />
     <Stack.Screen name="Services" component={Services} />
+    <Stack.Screen name="IBSForm" component={IBSForm} />
+    <Stack.Screen name="DiabeticForm" component={DiabeticForm} />
+    <Stack.Screen name="MentalStressForm" component={MentalStressForm} />
     <Stack.Screen name="Consultant" component={Consultant} />
-    <Stack.Screen name="Supplement" component={Supplement} />
+    <Stack.Screen name="Supplement" component={Supplements} />
+    {/* <Stack.Screen name="Supplements" component={Supplements} /> */}
     <Stack.Screen name="SingleSupplement" component={SingleSupplement} />
     <Stack.Screen name="Fitness" component={Fitness} />
+    <Stack.Screen name="VideoPlayer" component={VideoPlayer} />
+    <Stack.Screen name="Astrology" component={Astrology} />
+    <Stack.Screen name="Horroscope" component={Horroscope} />
     <Stack.Screen name="PaymentMethod" component={PaymentMethod} />
     <Stack.Screen name="PaymentOtp" component={PaymentOtp} />
     <Stack.Screen name="PaymentSuccess" component={PaymentSuccess} />

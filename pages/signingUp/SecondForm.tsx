@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,9 +6,9 @@ import {
   View,
   ScrollView,
   Image,
+  TextInput,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Icons from '../../Icons';
 import gsbLogo from '../../assets/gsbtransparent.png';
 import {completeSignup} from '../../redux/authSlice';
@@ -16,70 +16,54 @@ import {useDispatch} from 'react-redux';
 import {retrieveData, storeData} from '../../utils/Storage';
 import {getData} from '../../global/server';
 
-// Type definitions for better type safety
-type RootStackParamList = {
-  FirstForm: {
-    nextIndex: number;
-    selectedGoals: number[];
-    onReturn: () => void;
-  };
-  SecondForm: {
-    nextIndex: number;
-    selectedGoals: number[];
-    onReturn: () => void;
-  };
-  ThirdForm: {
-    nextIndex: number;
-    selectedGoals: number[];
-    onReturn: () => void;
-  };
-};
-
 const ServiceData = [
   {
-    questionText: 'Are you suffering from IBS?',
-    options: ['Yes', 'No'],
+    questionText: 'What type of diabetes do you have?',
+    options: ['Type 1', 'Type 2', 'Diabetes during pregnancy'],
     isMultipleChoice: false,
+    isTextInput: false,
   },
   {
-    questionText: 'Which type of IBS are you suffering from?',
-    options: ['IBS-C', 'IBS-B', 'IBS-M'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'What Are Your Symptoms?',
+    questionText: 'What is your sugar level?',
     options: [
-      'Diarrhea',
-      'Constipation',
-      'Gas',
-      'Abdominal Pain',
-      'Mucus with Stool',
-      'Disturbed Sleep Cycle',
-      'Weakness',
-      'Stress',
-      'Anxiety',
-      'Overthinking',
-      'Irritable',
-      'Lack of focus',
-      'Depression',
-      'Weight loss',
-      'Palpitation',
+      'Fasting. ___________________________',
+      'Postprandial. ___________________________',
+    ],
+    isMultipleChoice: false,
+    isTextInput: true,
+  },
+  {
+    questionText: 'What is your per day insulin dosage?',
+    options: [''],
+    isMultipleChoice: false,
+    isTextInput: true,
+  },
+  {
+    questionText: 'Are you taking any medication for diabetes?',
+    options: [''],
+    isMultipleChoice: false,
+    isTextInput: true,
+  },
+  {
+    questionText: 'What symptoms are you facing?',
+    options: [
+      'Thrist',
+      'Frequent urination',
+      'Fatigue',
+      'Blurry Vision',
+      'Pain in feet / leg',
     ],
     isMultipleChoice: true,
+    isTextInput: false,
   },
   {
-    questionText: 'How is the environment of your family?',
-    options: [
-      'Stressful',
-      'Slightly stressful',
-      'Slightly happy',
-      'Normal',
-      'Happy',
-    ],
+    questionText: 'Is anyone in your family suffering from diabetes?',
+    options: ['Yes', 'No'],
     isMultipleChoice: false,
+    isTextInput: false,
   },
   {
-    questionText: 'How long have you had this problem?',
+    questionText: 'You are suffering from diabetes from :',
     options: [
       '0-1 years',
       '1-5 years',
@@ -88,58 +72,18 @@ const ServiceData = [
       'More than 15 years',
     ],
     isMultipleChoice: false,
+    isTextInput: false,
   },
   {
-    questionText: 'Have you taken any treatment for IBS ?',
-    options: ['Allopathy', 'Homeopathic', 'Ayurvedic', 'Unani', 'None'],
+    questionText: 'Are you taking insulin doses ?',
+    options: ['Yes', 'No'],
     isMultipleChoice: false,
-  },
-  {
-    questionText: 'Which type of test have you taken?',
-    options: [
-      'Sonography',
-      'Ultrasound',
-      'Endoscopy',
-      'CBC',
-      'LFT',
-      'Thyroid profile',
-      'KFT',
-      'Lipid profile',
-      'Stool Test',
-    ],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'How is your lifestyle?',
-    options: ['Sedentary / very less work ', 'Moderate work', 'Heavy work'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Are you addicted to any of the following:',
-    options: ['Alcohol', 'Smoking', 'Junk Food', 'Phone', 'Tobacco'],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'Do you have any other medical condition?',
-    options: [
-      'Diabetes',
-      'High blood pressure/ Hypertension',
-      'Low blood pressure/ Hypotension',
-      'Heart disease',
-      'Lung disease',
-      'Kidney disease',
-      'Vitamin Deficiency',
-      'Anemia',
-      'Allergy',
-      'PCOD',
-    ],
-    isMultipleChoice: true,
+    isTextInput: false,
   },
 ];
 
-const FirstForm = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+const SecondForm = () => {
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const route = useRoute();
   const {nextIndex, selectedGoals, onReturn} = route.params || {};
@@ -147,9 +91,13 @@ const FirstForm = () => {
   const [selectedAnswers, setSelectedAnswers] = useState(
     Array.from({length: ServiceData.length}, () => new Set()),
   );
-  const [isFormComplete, setIsFormComplete] = useState(false); // New state
+  const [textInputAnswers, setTextInputAnswers] = useState(
+    Array(ServiceData.length).fill(''),
+  );
+  const [isFormComplete, setIsFormComplete] = useState(false);
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
+  const textInputRefs = useRef<Array<TextInput | null>>([]);
 
   useEffect(() => {
     const getTokenUserId = async () => {
@@ -167,9 +115,14 @@ const FirstForm = () => {
 
   useEffect(() => {
     // Check if all questions are answered
-    const isComplete = selectedAnswers.every(answerSet => answerSet.size > 0);
+    const isComplete = ServiceData.every((question, index) => {
+      if (question.isTextInput) {
+        return textInputAnswers[index].trim().length > 0;
+      }
+      return selectedAnswers[index].size > 0;
+    });
     setIsFormComplete(isComplete);
-  }, [selectedAnswers]);
+  }, [selectedAnswers, textInputAnswers]);
 
   const handleSingleChoiceSelect = (
     questionIndex: number,
@@ -197,17 +150,25 @@ const FirstForm = () => {
     setSelectedAnswers(newSelectedAnswers);
   };
 
+  const handleTextInputChange = (questionIndex: number, text: string) => {
+    const newTextInputAnswers = [...textInputAnswers];
+    newTextInputAnswers[questionIndex] = text;
+    setTextInputAnswers(newTextInputAnswers);
+  };
+
   const handleSubmit = async () => {
     try {
+      // Prepare the results, combining both selected and text input answers
       const result = ServiceData.map((question, index) => ({
         question: question.questionText,
-        selectedOptions: Array.from(selectedAnswers[index]).map(
-          i => question.options[i],
-        ),
+        selectedOptions: question.isTextInput
+          ? [textInputAnswers[index]]
+          : Array.from(selectedAnswers[index]).map(i => question.options[i]),
       }));
 
       console.log('Form Results:', result);
 
+      // Check if there are more goals to process
       if (nextIndex < selectedGoals.length) {
         const nextPage =
           selectedGoals[nextIndex] === 2
@@ -216,17 +177,72 @@ const FirstForm = () => {
             ? 'ThirdForm'
             : 'FirstForm';
 
-        navigation.navigate(nextPage, {
+        navigation.navigate(nextPage as never, {
           nextIndex: nextIndex + 1,
           selectedGoals,
           onReturn,
         });
       } else {
-        onReturn();
+        onReturn(); // Go back to the selection page after the last page
       }
     } catch (error) {
       console.error('Error submitting form:', error);
     }
+  };
+
+  const renderQuestion = (item: any, questionIndex: number) => {
+    if (item.isTextInput) {
+      return (
+        <TouchableOpacity
+          style={styles.answer}
+          onPress={() => textInputRefs.current[questionIndex]?.focus()}
+          activeOpacity={1}>
+          <View
+            style={[
+              styles.checkbox,
+              {
+                backgroundColor: textInputAnswers[questionIndex]
+                  ? '#F6AF24'
+                  : 'transparent',
+              },
+            ]}
+          />
+          <TextInput
+            ref={input => (textInputRefs.current[questionIndex] = input)}
+            style={styles.answerTextInput}
+            placeholder="Type your answer here"
+            onChangeText={text => handleTextInputChange(questionIndex, text)}
+            value={textInputAnswers[questionIndex]}
+            underlineColorAndroid="transparent"
+          />
+        </TouchableOpacity>
+      );
+    }
+
+    return item.options.map((answer: string, answerIndex: number) => (
+      <TouchableOpacity
+        key={answerIndex}
+        style={styles.answer}
+        onPress={() => {
+          if (item.isMultipleChoice) {
+            handleMultipleChoiceSelect(questionIndex, answerIndex);
+          } else {
+            handleSingleChoiceSelect(questionIndex, answerIndex);
+          }
+        }}>
+        <View
+          style={[
+            styles.checkbox,
+            {
+              backgroundColor: selectedAnswers[questionIndex].has(answerIndex)
+                ? '#F6AF24'
+                : 'transparent',
+            },
+          ]}
+        />
+        <Text style={styles.answerText}>{answer}</Text>
+      </TouchableOpacity>
+    ));
   };
 
   return (
@@ -242,38 +258,13 @@ const FirstForm = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollContainer}>
-        <Text style={styles.title}>IBS Colitis & Crohn's</Text>
+        <Text style={styles.title}>Diabetes</Text>
 
         {ServiceData.map((item, questionIndex) => (
           <View key={questionIndex} style={styles.questionContainer}>
             <Text style={styles.question}>{item.questionText}</Text>
             <View style={styles.answersContainer}>
-              {item.options.map((answer, answerIndex) => (
-                <TouchableOpacity
-                  key={answerIndex}
-                  style={styles.answer}
-                  onPress={() => {
-                    if (item.isMultipleChoice) {
-                      handleMultipleChoiceSelect(questionIndex, answerIndex);
-                    } else {
-                      handleSingleChoiceSelect(questionIndex, answerIndex);
-                    }
-                  }}>
-                  <View
-                    style={[
-                      styles.checkbox,
-                      {
-                        backgroundColor: selectedAnswers[questionIndex].has(
-                          answerIndex,
-                        )
-                          ? '#F6AF24'
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                  <Text style={styles.answerText}>{answer}</Text>
-                </TouchableOpacity>
-              ))}
+              {renderQuestion(item, questionIndex)}
             </View>
           </View>
         ))}
@@ -289,7 +280,7 @@ const FirstForm = () => {
   );
 };
 
-export default FirstForm;
+export default SecondForm;
 
 const styles = StyleSheet.create({
   container: {
@@ -334,6 +325,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
+    marginBottom: 10,
   },
   checkbox: {
     width: 20,
@@ -346,6 +338,14 @@ const styles = StyleSheet.create({
   answerText: {
     fontSize: 16,
     color: 'black',
+  },
+  answerTextInput: {
+    borderBottomWidth: 1,
+    borderColor: '#344054',
+    color: 'black',
+    fontSize: 16,
+    flex: 1,
+    marginTop: -20,
   },
   submitButton: {
     backgroundColor: '#F6AF24',

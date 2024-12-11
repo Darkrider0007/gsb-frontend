@@ -36,6 +36,8 @@ import {retrieveData} from '../utils/Storage';
 import {getData} from '../global/server';
 import {updateUser} from '../redux/authSlice';
 import Carousel from '../components/ParalaxCarousel';
+import HomeCarousel from '../components/HomeCarousel';
+import Video from 'react-native-video';
 
 const Categories = [
   {
@@ -61,12 +63,12 @@ const Categories = [
   {
     title: 'Astrology',
     image: CatImg9,
-    link: '',
+    link: 'Astrology',
   },
   {
-    title: 'Horrorscope',
+    title: 'Horoscope',
     image: CatImg10,
-    link: '',
+    link: 'Horroscope',
   },
 ];
 
@@ -96,11 +98,13 @@ const consultant = [
     title: 'Consultant 1',
     desc: 'Get best consultant and guide through your life and develop a cheerful life.',
     image: consultant1,
+    videoId: 'Dj05UlQkNsc',
   },
   {
     title: 'Consultant 2',
     desc: 'Get best consultant and guide through your life and develop a cheerful life.',
     image: consultant2,
+    videoId: 'Dj05UlQkNsc',
   },
 ];
 
@@ -109,16 +113,24 @@ const Success = [
     title: 'Story of Gurpreet Singh Batra',
     desc: 'Injured and Depression to Founder of GSBPATHY',
     image: success1,
+    videoUri: require('../assets/localVideo.mp4'),
   },
   {
     title: 'Fitness is key of Success',
     desc: 'Injured and Depression to Founder of GSBPATHY',
     image: success2,
+    videoUri:
+      'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
   },
 ];
 
 const Home = () => {
   const navigation = useNavigation();
+  const [currentVideo, setCurrentVideo] = useState(null);
+
+  const handlePress = videoUri => {
+    setCurrentVideo(videoUri);
+  };
   const dispatch = useDispatch();
   const [user, setUser] = useState({});
   const [token, setToken] = useState<string>(''); // State to store token
@@ -219,7 +231,8 @@ const Home = () => {
           </View>
         </View> */}
 
-        <Carousel />
+        {/* <Carousel /> */}
+        <HomeCarousel />
 
         <View style={styles.categoryContainer}>
           <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
@@ -350,10 +363,6 @@ const Home = () => {
             <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
               CONSULTANT
             </Text>
-            {/* <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Text style={{fontSize: 16, color: '#FFA800'}}>View All</Text>
-              <MaterialIcons name="navigate-next" size={25} color={'#FFA800'} />
-            </View> */}
           </View>
 
           <View
@@ -364,9 +373,7 @@ const Home = () => {
               flexWrap: 'wrap',
               width: '100%',
               justifyContent: 'space-between',
-              // paddingLeft: 10,
               marginTop: 20,
-              // backgroundColor: 'red',
               marginBottom: 20,
             }}>
             {consultant.map((item, index) => (
@@ -374,18 +381,14 @@ const Home = () => {
                 key={index}
                 style={{
                   width: '100%',
-                  // flexDirection: 'row',
-                  // justifyContent: '',
                   backgroundColor: '#ffe6c6',
                   borderRadius: 12,
-                  // padding: 10,
                 }}>
                 <View
                   style={{
                     height: 220,
                     width: '100%',
                     alignItems: 'center',
-                    //   backgroundColor: 'white',
                     marginTop: 15,
                     padding: 20,
                   }}>
@@ -402,6 +405,13 @@ const Home = () => {
                   <Text style={{color: 'black'}}>{item.desc}</Text>
                   <View style={{flexDirection: 'row', gap: 10, marginTop: 15}}>
                     <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate('VideoPlayer', {
+                          videoId: item.videoId,
+                          title: item.title,
+                          desc: item.desc,
+                        });
+                      }}
                       style={{
                         flexDirection: 'row',
                         gap: 10,
@@ -425,54 +435,28 @@ const Home = () => {
             <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
               SUCCESS STORIES
             </Text>
-            <TouchableOpacity
-              style={{flexDirection: 'row', alignItems: 'center', gap: 5}}
-              onPress={() => {
-                navigation.navigate('SuccessStories');
-              }}>
-              <Text style={{color: '#FFA800'}}>View More</Text>
-              <Icons.Entypo name="chevron-right" color={'#FFA800'} size={20} />
-            </TouchableOpacity>
           </View>
 
-          <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 10,
-              flexWrap: 'wrap',
-              width: '100%',
-              justifyContent: 'space-between',
-              // paddingLeft: 10,
-              marginTop: 20,
-              // backgroundColor: 'red',
-              marginBottom: 20,
-            }}>
+          <View style={styles.videoContainer}>
             {Success.map((item, index) => (
-              <View
-                key={index}
-                style={{
-                  width: '100%',
-                  // flexDirection: 'row',
-                  // justifyContent: '',
-                  // backgroundColor: '#ffe6c6',
-                  borderRadius: 12,
-                  // padding: 10,
-                }}>
-                <View
-                  style={{
-                    height: 220,
-                    width: '100%',
-                    alignItems: 'center',
-                    //   backgroundColor: 'white',
-                    marginTop: 15,
-                    //   padding: 20,
-                  }}>
-                  <Image
-                    source={item.image}
-                    style={{height: '100%', width: '100%', borderRadius: 16}}
-                  />
-                </View>
+              <View key={index} style={{width: '100%', borderRadius: 12}}>
+                <TouchableOpacity onPress={() => handlePress(item.videoUri)}>
+                  {currentVideo === item.videoUri ? (
+                    <Video
+                      source={
+                        typeof item.videoUri === 'string'
+                          ? {uri: item.videoUri}
+                          : item.videoUri
+                      }
+                      style={styles.video}
+                      resizeMode="cover"
+                      paused={currentVideo !== item.videoUri}
+                      controls
+                    />
+                  ) : (
+                    <Image source={item.image} style={styles.thumbnail} />
+                  )}
+                </TouchableOpacity>
                 <View style={{marginTop: 20}}>
                   <Text
                     style={{fontSize: 20, fontWeight: '600', color: 'black'}}>
@@ -518,5 +502,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%', // Adjust width to cover 20% of the container
     borderRadius: 18, // Ensure the gradient matches the container's border radius
+  },
+  videoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  thumbnail: {
+    height: 220,
+    width: '100%',
+    borderRadius: 16,
+  },
+  video: {
+    height: 220,
+    width: '100%',
+    borderRadius: 16,
   },
 });
