@@ -99,6 +99,31 @@ const MyOrders = () => {
     setSelectedTab(tabName);
   };
 
+  const getStatusDescription = status => {
+    switch (status) {
+      case 'TO RECEIVE':
+        return {
+          icon: 'package',
+          text: 'Orders that are being processed and shipped',
+        };
+      case 'COMPLETED':
+        return {
+          icon: 'check-circle',
+          text: 'Successfully delivered orders',
+        };
+      case 'CANCELLED':
+        return {
+          icon: 'x-circle',
+          text: 'Orders that were cancelled',
+        };
+      default:
+        return {
+          icon: 'info',
+          text: '',
+        };
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -110,49 +135,63 @@ const MyOrders = () => {
       </View>
 
       {/* Option navigators */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.navigateButton,
-            selectedTab === 'TO RECEIVE' && {backgroundColor: '#FFA800'},
-          ]}
-          onPress={() => handleTabPress('TO RECEIVE')}>
-          <Text
+      <View>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
             style={[
-              styles.navigateButtonText,
-              selectedTab === 'TO RECEIVE' && {color: 'white'},
-            ]}>
-            TO RECEIVE
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.navigateButton,
-            selectedTab === 'COMPLETED' && {backgroundColor: '#FFA800'},
-          ]}
-          onPress={() => handleTabPress('COMPLETED')}>
-          <Text
+              styles.navigateButton,
+              selectedTab === 'TO RECEIVE' && {backgroundColor: '#FFA800'},
+            ]}
+            onPress={() => handleTabPress('TO RECEIVE')}>
+            <Text
+              style={[
+                styles.navigateButtonText,
+                selectedTab === 'TO RECEIVE' && {color: 'white'},
+              ]}>
+              TO RECEIVE
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.navigateButtonText,
-              selectedTab === 'COMPLETED' && {color: 'white'},
-            ]}>
-            COMPLETED
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.navigateButton,
-            selectedTab === 'CANCELLED' && {backgroundColor: '#FFA800'},
-          ]}
-          onPress={() => handleTabPress('CANCELLED')}>
-          <Text
+              styles.navigateButton,
+              selectedTab === 'COMPLETED' && {backgroundColor: '#FFA800'},
+            ]}
+            onPress={() => handleTabPress('COMPLETED')}>
+            <Text
+              style={[
+                styles.navigateButtonText,
+                selectedTab === 'COMPLETED' && {color: 'white'},
+              ]}>
+              COMPLETED
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.navigateButtonText,
-              selectedTab === 'CANCELLED' && {color: 'white'},
-            ]}>
-            CANCELLED
+              styles.navigateButton,
+              selectedTab === 'CANCELLED' && {backgroundColor: '#FFA800'},
+            ]}
+            onPress={() => handleTabPress('CANCELLED')}>
+            <Text
+              style={[
+                styles.navigateButtonText,
+                selectedTab === 'CANCELLED' && {color: 'white'},
+              ]}>
+              CANCELLED
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Status description section */}
+        <View style={styles.statusDescriptionContainer}>
+          <Icons.Feather
+            name={getStatusDescription(selectedTab).icon}
+            size={20}
+            color="#666"
+          />
+          <Text style={styles.statusDescriptionText}>
+            {getStatusDescription(selectedTab).text}
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView>
@@ -308,5 +347,18 @@ const styles = StyleSheet.create({
   footerPrice: {
     color: '#FFA800',
     fontSize: 12,
+  },
+  statusDescriptionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#F5F5F5',
+    marginTop: 5,
+  },
+  statusDescriptionText: {
+    marginLeft: 10,
+    color: '#666',
+    fontSize: 14,
   },
 });

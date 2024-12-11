@@ -8,7 +8,6 @@ import {
   Image,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Icons from '../../Icons';
 import gsbLogo from '../../assets/gsbtransparent.png';
 import {completeSignup} from '../../redux/authSlice';
@@ -16,130 +15,63 @@ import {useDispatch} from 'react-redux';
 import {retrieveData, storeData} from '../../utils/Storage';
 import {getData} from '../../global/server';
 
-// Type definitions for better type safety
-type RootStackParamList = {
-  FirstForm: {
-    nextIndex: number;
-    selectedGoals: number[];
-    onReturn: () => void;
-  };
-  SecondForm: {
-    nextIndex: number;
-    selectedGoals: number[];
-    onReturn: () => void;
-  };
-  ThirdForm: {
-    nextIndex: number;
-    selectedGoals: number[];
-    onReturn: () => void;
-  };
-};
-
 const ServiceData = [
   {
-    questionText: 'Are you suffering from IBS?',
+    questionText: 'Do you feel down or hopeless most of the time?',
     options: ['Yes', 'No'],
     isMultipleChoice: false,
   },
   {
-    questionText: 'Which type of IBS are you suffering from?',
-    options: ['IBS-C', 'IBS-B', 'IBS-M'],
+    questionText: 'Have you lost interest in activities you used to enjoy?',
+    options: ['Yes', 'No'],
     isMultipleChoice: false,
   },
   {
-    questionText: 'What Are Your Symptoms?',
-    options: [
-      'Diarrhea',
-      'Constipation',
-      'Gas',
-      'Abdominal Pain',
-      'Mucus with Stool',
-      'Disturbed Sleep Cycle',
-      'Weakness',
-      'Stress',
-      'Anxiety',
-      'Overthinking',
-      'Irritable',
-      'Lack of focus',
-      'Depression',
-      'Weight loss',
-      'Palpitation',
-    ],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'How is the environment of your family?',
-    options: [
-      'Stressful',
-      'Slightly stressful',
-      'Slightly happy',
-      'Normal',
-      'Happy',
-    ],
+    questionText:
+      'Do you experience difficulty concentrating or making decisions?',
+    options: ['Yes', 'No'],
     isMultipleChoice: false,
   },
   {
-    questionText: 'How long have you had this problem?',
-    options: [
-      '0-1 years',
-      '1-5 years',
-      '5-10 years',
-      '10-15 years',
-      'More than 15 years',
-    ],
+    questionText: 'Do you have trouble sleeping or sleeping too much?',
+    options: ['Yes, I have trouble sleeping', 'Yes, I sleep too much', 'No'],
     isMultipleChoice: false,
   },
   {
-    questionText: 'Have you taken any treatment for IBS ?',
-    options: ['Allopathy', 'Homeopathic', 'Ayurvedic', 'Unani', 'None'],
+    questionText: 'Do you often feel tired or low on energy?',
+    options: ['Yes', 'No'],
     isMultipleChoice: false,
   },
   {
-    questionText: 'Which type of test have you taken?',
-    options: [
-      'Sonography',
-      'Ultrasound',
-      'Endoscopy',
-      'CBC',
-      'LFT',
-      'Thyroid profile',
-      'KFT',
-      'Lipid profile',
-      'Stool Test',
-    ],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'How is your lifestyle?',
-    options: ['Sedentary / very less work ', 'Moderate work', 'Heavy work'],
+    questionText: 'Do you feel worthless or guilty for no reason?',
+    options: ['Yes', 'No'],
     isMultipleChoice: false,
   },
   {
-    questionText: 'Are you addicted to any of the following:',
-    options: ['Alcohol', 'Smoking', 'Junk Food', 'Phone', 'Tobacco'],
-    isMultipleChoice: true,
+    questionText:
+      'Have you experienced any changes in your appetite or weight?',
+    options: ['Yes, loss of appetite', 'Yes, increased appetite', 'No'],
+    isMultipleChoice: false,
   },
   {
-    questionText: 'Do you have any other medical condition?',
-    options: [
-      'Diabetes',
-      'High blood pressure/ Hypertension',
-      'Low blood pressure/ Hypotension',
-      'Heart disease',
-      'Lung disease',
-      'Kidney disease',
-      'Vitamin Deficiency',
-      'Anemia',
-      'Allergy',
-      'PCOD',
-    ],
-    isMultipleChoice: true,
+    questionText: 'Do you have thoughts of harming yourself or others?',
+    options: ['Yes', 'No'],
+    isMultipleChoice: false,
+  },
+  {
+    questionText: 'Do you experience mood swings or feel easily irritated?',
+    options: ['Yes', 'No'],
+    isMultipleChoice: false,
+  },
+  {
+    questionText: 'Do you feel disconnected from friends or family?',
+    options: ['Yes', 'No'],
+    isMultipleChoice: false,
   },
 ];
 
-const FirstForm = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+const ThirdForm = () => {
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const route = useRoute();
   const {nextIndex, selectedGoals, onReturn} = route.params || {};
@@ -147,7 +79,7 @@ const FirstForm = () => {
   const [selectedAnswers, setSelectedAnswers] = useState(
     Array.from({length: ServiceData.length}, () => new Set()),
   );
-  const [isFormComplete, setIsFormComplete] = useState(false); // New state
+  const [isFormComplete, setIsFormComplete] = useState(false);
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
 
@@ -180,25 +112,9 @@ const FirstForm = () => {
     setSelectedAnswers(newSelectedAnswers);
   };
 
-  const handleMultipleChoiceSelect = (
-    questionIndex: number,
-    answerIndex: number,
-  ) => {
-    const newSelectedAnswers = [...selectedAnswers];
-    const selectedSet = new Set(newSelectedAnswers[questionIndex]);
-
-    if (selectedSet.has(answerIndex)) {
-      selectedSet.delete(answerIndex);
-    } else {
-      selectedSet.add(answerIndex);
-    }
-
-    newSelectedAnswers[questionIndex] = selectedSet;
-    setSelectedAnswers(newSelectedAnswers);
-  };
-
   const handleSubmit = async () => {
     try {
+      // Prepare the results
       const result = ServiceData.map((question, index) => ({
         question: question.questionText,
         selectedOptions: Array.from(selectedAnswers[index]).map(
@@ -208,6 +124,7 @@ const FirstForm = () => {
 
       console.log('Form Results:', result);
 
+      // Check if there are more goals to process
       if (nextIndex < selectedGoals.length) {
         const nextPage =
           selectedGoals[nextIndex] === 2
@@ -216,13 +133,13 @@ const FirstForm = () => {
             ? 'ThirdForm'
             : 'FirstForm';
 
-        navigation.navigate(nextPage, {
+        navigation.navigate(nextPage as never, {
           nextIndex: nextIndex + 1,
           selectedGoals,
           onReturn,
         });
       } else {
-        onReturn();
+        onReturn(); // Go back to the selection page after the last page
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -242,7 +159,7 @@ const FirstForm = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollContainer}>
-        <Text style={styles.title}>IBS Colitis & Crohn's</Text>
+        <Text style={styles.title}>Mental Depression</Text>
 
         {ServiceData.map((item, questionIndex) => (
           <View key={questionIndex} style={styles.questionContainer}>
@@ -252,13 +169,9 @@ const FirstForm = () => {
                 <TouchableOpacity
                   key={answerIndex}
                   style={styles.answer}
-                  onPress={() => {
-                    if (item.isMultipleChoice) {
-                      handleMultipleChoiceSelect(questionIndex, answerIndex);
-                    } else {
-                      handleSingleChoiceSelect(questionIndex, answerIndex);
-                    }
-                  }}>
+                  onPress={() =>
+                    handleSingleChoiceSelect(questionIndex, answerIndex)
+                  }>
                   <View
                     style={[
                       styles.checkbox,
@@ -289,7 +202,7 @@ const FirstForm = () => {
   );
 };
 
-export default FirstForm;
+export default ThirdForm;
 
 const styles = StyleSheet.create({
   container: {

@@ -23,19 +23,22 @@ import {green} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 
 const ServiceData = [
   {
-    title: `IBS Colitis & Crohn's`,
-    desc: 'IBS (irritable bowel syndrome) is a lifestyle disorder that affects the gastrointestinal tract and large intestine (colon).',
+    title: `IBS Colitics & Crohn's`,
+    desc: 'IBS (irritable bowel syndrome) is a lifestyle disorder that affects the gastrointestinal tract and large intestine (colon)',
     image: service1,
+    link: 'IBSForm',
   },
   {
-    title: 'DIABETES',
+    title: 'DIABETICS',
     desc: 'Type 2 diabetes is a chronic metabolic disorder characterised by insulin resistance and relative insulin deficiency.',
     image: service2,
+    link: 'DiabeticForm',
   },
   {
-    title: 'Mental Depression',
-    desc: `IBD stands for Inflammatory Bowel Disease. It's a term used to describe chronic inflammation of the digestive tract.`,
+    title: `Mental Depression`,
+    desc: `IBD stands for Inflammatory Bowel Disease. It's a term used to describe chronic inflammation of the digestive tract`,
     image: service3,
+    link: 'MentalStressForm',
   },
 ];
 
@@ -67,6 +70,10 @@ const Services = () => {
 
   const totalCartItems = CartData.reduce((sum, item) => sum + item.quantity, 0);
 
+  const handleServicePress = link => {
+    navigation.navigate(link);
+  };
+
   return (
     <View style={styles.container}>
       <View
@@ -95,9 +102,6 @@ const Services = () => {
             </View>
           )}
         </TouchableOpacity>
-        {/* <Text style={{fontSize: 20, color: 'black', fontWeight: '800'}}>
-          Fitness
-        </Text> */}
       </View>
 
       <View style={{marginLeft: 20}}>
@@ -159,31 +163,27 @@ const Services = () => {
             flexWrap: 'wrap',
             width: '100%',
             justifyContent: 'space-between',
-            // paddingLeft: 10,
             marginTop: 20,
-            // backgroundColor: 'red',
             marginBottom: 20,
           }}>
           {ServiceData.map((item, index) => (
-            <View
+            <TouchableOpacity
               key={index}
               style={{
                 width: '100%',
                 flexDirection: 'column',
                 gap: 10,
-                // backgroundColor: '#ffe6c6',
                 borderRadius: 12,
-                // padding: 10,
                 borderColor: '#FFA800',
                 borderWidth: 1,
                 marginBottom: 20,
-              }}>
+              }}
+              onPress={() => handleServicePress(item.link)}>
               <View
                 style={{
                   height: 250,
                   width: '100%',
                   alignItems: 'center',
-                  //   backgroundColor: 'white',
                   marginTop: 15,
                   paddingHorizontal: 10,
                 }}>
@@ -197,7 +197,7 @@ const Services = () => {
                   {item.title}
                 </Text>
                 <Text style={{color: 'black'}}>{item.desc}</Text>
-                <TouchableOpacity
+                <View
                   style={{
                     marginTop: 10,
                     flexDirection: 'row',
@@ -212,9 +212,9 @@ const Services = () => {
                     color={'#FFA800'}
                     size={18}
                   />
-                </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
