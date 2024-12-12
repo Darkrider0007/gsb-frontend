@@ -1,13 +1,16 @@
 // VideoPlayer.tsx
 import React from 'react';
-import {StyleSheet, View, Text, Dimensions} from 'react-native';
+import { StyleSheet, View, Text, Dimensions } from 'react-native';
 import YouTube from 'react-native-youtube-iframe';
 import Header from '../Header';
-import {useRoute} from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import Video from 'react-native-video';
 
 const VideoPlayer = () => {
   const route = useRoute();
-  const {videoId, title, desc} = route.params;
+  const { videoId, title, desc } = route.params;
+
+  console.log(videoId, title, desc);
 
   const screenWidth = Dimensions.get('window').width;
   const videoWidth = screenWidth - 40;
@@ -17,12 +20,23 @@ const VideoPlayer = () => {
     <View style={styles.container}>
       <Header />
       <View style={styles.content}>
-        <YouTube
+        <Video
+          source={
+            typeof videoId === 'string'
+              ? { uri: videoId }
+              : videoId
+          }
+          style={styles.video}
+          resizeMode="cover"
+          paused={false}
+          controls
+        />
+        {/* <YouTube
           videoId={videoId}
           height={videoHeight}
           width={videoWidth}
           onError={e => console.log('YouTube Error:', e)}
-        />
+        /> */}
         <View style={styles.textContainer}>
           <Text style={styles.videoTitle}>{title}</Text>
           <Text style={styles.videoDesc}>{desc}</Text>
@@ -57,5 +71,10 @@ const styles = StyleSheet.create({
     color: 'black',
     lineHeight: 20,
     opacity: 0.8,
+  },
+  video: {
+    height: 220,
+    width: '100%',
+    borderRadius: 16,
   },
 });

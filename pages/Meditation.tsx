@@ -1,10 +1,20 @@
-import React from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Header from '../components/InnerPeaceHeader/Header';
 import MeditationCard from '../components/Meditation/MeditationCard';
-import {MeditationData} from '../components/Meditation/constants';
+// import { MeditationData } from '../components/Meditation/constants';
+import { getData } from '../global/server';
 
 const Meditation = () => {
+  const [MedicationData, setMedicationData] = useState([]);
+
+  useEffect(() => {
+    const fetchMeditationData = async () => {
+      const res = await getData('/api/video', null);
+      setMedicationData(res);
+    }
+    fetchMeditationData();
+  }, []);
   return (
     <View style={styles.container}>
       <Header title="Meditation" />
@@ -12,8 +22,8 @@ const Meditation = () => {
         showsVerticalScrollIndicator={false}
         style={styles.scrollContainer}>
         <View style={styles.cardContainer}>
-          {MeditationData.map((item, index) => (
-            <MeditationCard key={index} item={item} />
+          {MedicationData.map((item, index) => (
+            item?.category == "meditation" && <MeditationCard key={index} item={item} />
           ))}
         </View>
       </ScrollView>

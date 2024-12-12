@@ -8,28 +8,25 @@ import {
   TouchableOpacity,
   View,
   useColorScheme,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Carousel from '../../components/Carousel';
-import countryFlag from '../../assets/india.png';
+import React, { useState } from 'react';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
+
 
 import appleLogo from '../../assets/apple.png';
 import googleLogo from '../../assets/google.png';
 import fbLogo from '../../assets/fb.png';
-import {useNavigation} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {signupFailure, signupStart, signupSuccess} from '../../redux/authSlice';
-import axios from 'axios';
-import {postData} from '../../global/server';
-import {RootState} from '../../redux/store';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { signupFailure, signupStart, signupSuccess } from '../../redux/authSlice';
+import { postData } from '../../global/server';
+import { RootState } from '../../redux/store';
 import CarouselCopy from '../../components/CarouselCopy';
 
 const SignIn = () => {
   const isDarkMode = useColorScheme() === 'dark';
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -38,7 +35,7 @@ const SignIn = () => {
   const navigation = useNavigation();
 
   const dispatch = useDispatch();
-  const {isFetching, error, isAuth} = useSelector(
+  const { isFetching, error, isAuth } = useSelector(
     (state: RootState) => state.auth,
   );
 
@@ -51,21 +48,15 @@ const SignIn = () => {
     try {
       const res = await postData(
         '/api/auth/phone-login',
-        {phone: `+91${phoneNumber}`},
+        { email },
         null,
         null,
       );
       console.log(res);
       dispatch(signupSuccess(res?.data));
-      const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
-      if (cleanNumber.length >= 10) {
-        navigation.navigate('Verification', {phoneNumber: `+91${phoneNumber}`});
-      } else {
-        Alert.alert(
-          'Invalid Phone Number',
-          'Please enter a valid phone number with at least 10 digits',
-        );
-      }
+
+      navigation.navigate('Verification', { email });
+
     } catch (err) {
       dispatch(signupFailure());
       console.log(err);
@@ -82,22 +73,16 @@ const SignIn = () => {
         backgroundColor="transparent"
       />
 
-      <View style={{position: 'relative', height: '100%'}}>
+      <View style={{ position: 'relative', height: '100%' }}>
         <CarouselCopy />
         <View style={styles.bottomContainer}>
-          <Text style={styles.sectionTitle}>Phone Number</Text>
+          <Text style={styles.sectionTitle}>Email Id</Text>
           <View style={styles.inputContainer}>
-            {/* Country Flag Section */}
-            <View style={styles.flagContainer}>
-              {/* Your country flag component goes here */}
-              <Image source={countryFlag} />
-            </View>
             {/* Phone Number Input Section */}
             <TextInput
               style={styles.input}
               placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-              onChangeText={text => setPhoneNumber(text)}
+              onChangeText={text => setEmail(text)}
             />
           </View>
           {/* Button */}
@@ -105,10 +90,9 @@ const SignIn = () => {
             style={[
               styles.button,
               // Optional: add disabled style
-              isLoading && {opacity: 0.7},
-              phoneNumber.length !== 10 && {opacity: 0.7},
+              isLoading && { opacity: 0.7 },
             ]}
-            disabled={isLoading || phoneNumber.length !== 10}
+            disabled={isLoading}
             onPress={handleSignUp}>
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
@@ -126,11 +110,11 @@ const SignIn = () => {
           </View>
           <Text style={styles.footerText}>
             By continuing you agree to the{' '}
-            <Text style={{color: '#FFA800', fontWeight: 'bold'}}>
+            <Text style={{ color: '#FFA800', fontWeight: 'bold' }}>
               Term of service
             </Text>{' '}
             and{' '}
-            <Text style={{color: '#FFA800', fontWeight: 'bold'}}>Policies</Text>
+            <Text style={{ color: '#FFA800', fontWeight: 'bold' }}>Policies</Text>
           </Text>
         </View>
       </View>

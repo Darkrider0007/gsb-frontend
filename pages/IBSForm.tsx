@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,7 +18,7 @@ const IBSForm = () => {
     message: '',
   });
 
-  const handleChange = (name, value) => {
+  const handleChange = (name: any, value: any) => {
     setFormData({
       ...formData,
       [name]: value,

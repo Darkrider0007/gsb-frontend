@@ -5,16 +5,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Test from '../../components/ScrollNumberInput';
 import ScrollNumberInput from '../../components/ScrollNumberInput';
 import Icons from '../../Icons';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../redux/store';
-import {retrieveData} from '../../utils/Storage';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import { retrieveData } from '../../utils/Storage';
 import axios from 'axios';
-import {BASE_URL} from '../../global/server';
+import { BASE_URL } from '../../global/server';
 
 const Weight = () => {
   const navigation = useNavigation();
@@ -57,8 +57,8 @@ const Weight = () => {
     try {
       const response = await axios.put(
         url,
-        {age},
-        {headers: {token: `Bearer ${token}`}},
+        { age },
+        { headers: { token: `Bearer ${token}` } },
       );
       console.log('Response from update:', response); // Add this line
       if (response) {
@@ -73,7 +73,7 @@ const Weight = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{marginBottom: 10}}>
+      <View style={{ marginBottom: 10 }}>
         <TouchableOpacity
           onPress={() => {
             navigation.goBack();
@@ -90,11 +90,11 @@ const Weight = () => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            keyboardType="numeric"
+            editable={false}
             onChangeText={handleAgeChange}
             value={age}
             placeholderTextColor={'black'}
-            // placeholder={18}
+          // placeholder={18}
           />
           <Text style={styles.unit}>|</Text>
           <Text style={styles.unit}>Years</Text>

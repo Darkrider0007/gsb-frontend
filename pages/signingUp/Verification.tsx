@@ -6,18 +6,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useRef, useState} from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import React, { useRef, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icons from '../../Icons';
-import {postData} from '../../global/server';
+import { postData } from '../../global/server';
 import {
   completeSignup,
   verificationFailure,
   verificationStart,
   verificationSuccess,
 } from '../../redux/authSlice';
-import {useDispatch} from 'react-redux';
-import {storeData} from '../../utils/Storage';
+import { useDispatch } from 'react-redux';
+import { storeData } from '../../utils/Storage';
 
 const Verification = () => {
   const inputRefs = Array(6)
@@ -27,7 +27,7 @@ const Verification = () => {
   const [resendEnabled, setResendEnabled] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
-  const {phoneNumber} = route.params as {phoneNumber: string};
+  const { email } = route.params as { email: string };
   const dispatch = useDispatch();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ const Verification = () => {
 
         const response = await postData(
           '/api/auth/verify-otp',
-          {phone: phoneNumber, otp: fullOtp},
+          { email, otp: fullOtp },
           null,
           null,
         );
@@ -129,7 +129,7 @@ const Verification = () => {
       <Text style={styles.title}>Verify Account</Text>
       <Text style={styles.subtitle}>
         Verify your account by entering the verification code we sent to{' '}
-        {phoneNumber}
+        {email}
       </Text>
 
       <View style={styles.otpView}>
@@ -154,7 +154,7 @@ const Verification = () => {
 
       <TouchableOpacity
         disabled={isLoading}
-        style={[styles.button, {opacity: isLoading ? 0.7 : 1}]}
+        style={[styles.button, { opacity: isLoading ? 0.7 : 1 }]}
         onPress={handleVerify}>
         {isLoading ? (
           <ActivityIndicator color="#FFFFFF" size="small" />

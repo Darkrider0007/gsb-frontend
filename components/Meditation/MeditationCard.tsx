@@ -1,17 +1,18 @@
 import React from 'react';
-import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {Color} from '../../assets/constants/Color';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Color } from '../../assets/constants/Color';
 import Icons from '../../Icons';
 
-const MeditationCard = ({item}) => {
+const MeditationCard = ({ item }: any) => {
+  console.log(item);
   const navigation = useNavigation();
 
   const handleVideoPress = () => {
     navigation.navigate('VideoPlayer', {
-      videoId: item.videoId,
+      videoId: item.videoUrl,
       title: item.title,
-      desc: item.desc,
+      desc: item.description,
     });
   };
 
@@ -20,11 +21,11 @@ const MeditationCard = ({item}) => {
       <TouchableOpacity
         onPress={handleVideoPress}
         style={styles.imageContainer}>
-        <Image source={item.image} style={styles.cardImage} />
+        <Image source={{ uri: "https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg" }} style={styles.cardImage} />
       </TouchableOpacity>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDescription}>{item.desc}</Text>
+        <Text style={styles.cardDescription}>{item.description}</Text>
         <TouchableOpacity onPress={handleVideoPress} style={styles.videoButton}>
           <Icons.Feather name="play-circle" color={'#FFA800'} size={18} />
           <Text style={styles.videoButtonText}>Watch Video</Text>

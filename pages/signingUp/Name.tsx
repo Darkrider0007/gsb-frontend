@@ -5,14 +5,17 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icons from '../../Icons';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../redux/store';
-import {retrieveData} from '../../utils/Storage';
-import {BASE_URL} from '../../global/server';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import { retrieveData } from '../../utils/Storage';
+import { BASE_URL } from '../../global/server';
 import axios from 'axios';
 
 const Name = () => {
@@ -21,7 +24,7 @@ const Name = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [dob, setDob] = useState<string>('');
-  const [error, setError] = useState<{[key: string]: string}>({});
+  const [error, setError] = useState<{ [key: string]: string }>({});
   const [token, setToken] = useState<string>('');
   const userId = useSelector((state: RootState) => state.auth.user?._id);
   const storedName = useSelector((state: RootState) => state.auth?.user?.name);
@@ -44,20 +47,20 @@ const Name = () => {
 
   const handleNameChange = (text: string) => {
     setName(text);
-    setError(prev => ({...prev, name: ''}));
+    setError(prev => ({ ...prev, name: '' }));
   };
 
   const handlePhoneChange = (text: string) => {
     // Only allow numeric input
     if (/^\d*$/.test(text) && text.length <= 10) {
       setPhoneNumber(text);
-      setError(prev => ({...prev, phone: ''}));
+      setError(prev => ({ ...prev, phone: '' }));
     }
   };
 
   const handleAddressChange = (text: string) => {
     setAddress(text);
-    setError(prev => ({...prev, address: ''}));
+    setError(prev => ({ ...prev, address: '' }));
   };
 
   const handleDobChange = (text: string) => {
@@ -68,11 +71,11 @@ const Name = () => {
       .replace(/(\d{2})(\d)/, '$1/$2')
       .substr(0, 10);
     setDob(formatted);
-    setError(prev => ({...prev, dob: ''}));
+    setError(prev => ({ ...prev, dob: '' }));
   };
 
   const validateInputs = () => {
-    const newErrors: {[key: string]: string} = {};
+    const newErrors: { [key: string]: string } = {};
 
     // Validate name
     if (!name.trim()) {
@@ -119,14 +122,14 @@ const Name = () => {
     try {
       const response = await axios.put(
         url,
-        {name: name.trim()},
-        {headers: {token: `Bearer ${token}`}},
+        { name: name.trim() },
+        { headers: { token: `Bearer ${token}` } },
       );
 
       if (response?.data) {
         navigation.navigate('Age');
       } else {
-        setError(prev => ({...prev, submit: 'Failed to update user data'}));
+        setError(prev => ({ ...prev, submit: 'Failed to update user data' }));
       }
     } catch (error) {
       console.error('Error updating user:', error);
@@ -147,7 +150,7 @@ const Name = () => {
     props: any = {},
   ) => (
     <>
-      <View style={{flexDirection: 'row', width: '80%'}}>
+      <View style={{ flexDirection: 'row', width: '80%' }}>
         <Text style={styles.inputLabel}>{label}</Text>
       </View>
       <View
@@ -156,11 +159,11 @@ const Name = () => {
           error[errorKey] ? styles.inputError : null,
         ]}>
         <TextInput
-          style={[styles.input, props.multiline && {height: 80}]}
+          style={[styles.input, props.multiline && { height: 80 }]}
           onChangeText={onChangeText}
           value={value}
           placeholder={placeholder}
-          placeholderTextColor={'black'}
+          placeholderTextColor={'#D3D3D3'} // Light grey hex code
           {...props}
         />
       </View>
@@ -171,74 +174,77 @@ const Name = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={{marginBottom: 10}} />
-      <Text style={styles.subtitle}>Step 3 of 8</Text>
-      <Text style={styles.title}>Enter your Details?</Text>
+    <KeyboardAvoidingView style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={{ marginBottom: 10 }} />
+        <Text style={styles.subtitle}>Step 3 of 8</Text>
+        <Text style={styles.title}>Enter your Details?</Text>
 
-      <View style={styles.subcontainer}>
-        {renderInput(
-          'Write your Name',
-          name,
-          handleNameChange,
-          'name',
-          'John Doe',
-        )}
+        <View style={styles.subcontainer}>
+          {renderInput(
+            'Write your Name',
+            name,
+            handleNameChange,
+            'name',
+            'John Doe',
+          )}
 
-        {renderInput(
-          'Phone Number',
-          phoneNumber,
-          handlePhoneChange,
-          'phone',
-          '1234567890',
-          {
-            keyboardType: 'numeric',
-            maxLength: 10,
-            caretHidden: false,
-            keyboardType: 'number-pad',
-            returnKeyType: 'done',
-            onKeyPress: ({nativeEvent}) => {
-              // Allow only numeric input
-              if (
-                !/^[0-9]$/.test(nativeEvent.key) &&
-                nativeEvent.key !== 'Backspace'
-              ) {
-                nativeEvent.preventDefault();
-              }
+          {renderInput(
+            'Phone Number',
+            phoneNumber,
+            handlePhoneChange,
+            'phone',
+            '1234567890',
+            {
+              maxLength: 10,
+              caretHidden: false,
+              keyboardType: 'phone-pad',
+              returnKeyType: 'done',
+              onKeyPress: ({ nativeEvent }: any) => {
+                // Allow only numeric input
+                if (
+                  !/^[0-9]$/.test(nativeEvent.key) &&
+                  nativeEvent.key !== 'Backspace'
+                ) {
+                  nativeEvent.preventDefault();
+                }
+              },
             },
-          },
-        )}
+          )}
 
-        {renderInput(
-          'Address',
-          address,
-          handleAddressChange,
-          'address',
-          'Enter your full address',
-          {multiline: true, numberOfLines: 3},
-        )}
+          {renderInput(
+            'Address',
+            address,
+            handleAddressChange,
+            'address',
+            'Enter your full address',
+            { multiline: true, numberOfLines: 3 },
+          )}
 
-        {renderInput(
-          'Date of Birth',
-          dob,
-          handleDobChange,
-          'dob',
-          'DD/MM/YYYY',
-          {keyboardType: 'numeric', maxLength: 10},
-        )}
-      </View>
+          {renderInput(
+            'Date of Birth',
+            dob,
+            handleDobChange,
+            'dob',
+            'DD/MM/YYYY',
+            { keyboardType: 'numeric', maxLength: 10 },
+          )}
+        </View>
 
-      <TouchableOpacity
-        style={[
-          styles.button,
-          !(name.trim() && phoneNumber.trim() && address.trim() && dob.trim())
-            ? styles.buttonDisabled
-            : null,
-        ]}
-        onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Next Step</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            !(name.trim() && phoneNumber.trim() && address.trim() && dob.trim())
+              ? styles.buttonDisabled
+              : null,
+          ]}
+          onPress={handleNextStep}>
+          <Text style={styles.buttonText}>Next Step</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
