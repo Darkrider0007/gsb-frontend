@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import Icons from '../Icons';
-import {useNavigation} from '@react-navigation/native';
-import {retrieveData} from '../utils/Storage';
+import { useNavigation } from '@react-navigation/native';
+import { retrieveData } from '../utils/Storage';
 import axios from 'axios';
-import {BASE_URL} from '../global/server';
+import { BASE_URL } from '../global/server';
 
 const MySuccessStories = () => {
   const navigation = useNavigation();
@@ -27,7 +27,7 @@ const MySuccessStories = () => {
           token: `Bearer ${token}`,
         },
       });
-      console.log('response ', response.data);
+      // console.log('response ', response.data);
       setSuccessStories(response.data.reverse());
     } catch (error) {
       console.log('Error:', error);
@@ -61,17 +61,39 @@ const MySuccessStories = () => {
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Text style={styles.title}>My Success Stories</Text>
-        <View style={{width: 25}}></View>
+        <View style={{ width: 25 }}></View>
       </View>
       <ScrollView style={styles.scrollView}>
+        {
+          successStories.length === 0 && (
+            <View style={{ alignItems: 'center', height: '100%', marginTop: 20 }}>
+              <Text
+                style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}
+              >No stories available</Text>
+              <Text
+                style={{ fontSize: 16, color: 'gray' }}
+              >Click on Add Story to add your success story</Text>
+            </View>
+          )
+        }
         {successStories.map((item, index) => {
-          console.log('img url ', item?.storyImg?.secure_url);
-          const imageUrl = item?.storyImg?.secure_url;
+          // console.log('img url ', item?.afterStoryImg);
+          const beforeStoryImgUrl = item?.beforeStoryImg;
+          const imageUrl = item?.afterStoryImg;
           return (
             <View key={index} style={styles.storyCard}>
               <View style={styles.imageContainer}>
+                {
+                  beforeStoryImgUrl ? (
+                    <Image source={{ uri: beforeStoryImgUrl }} style={styles.imageStyle} />
+                  ) : (
+                    <View style={styles.noImageContainer}>
+                      <Text style={styles.noImageText}>No Image</Text>
+                    </View>
+                  )
+                }
                 {imageUrl ? (
-                  <Image source={{uri: imageUrl}} style={styles.imageStyle} />
+                  <Image source={{ uri: imageUrl }} style={styles.imageStyle} />
                 ) : (
                   <View style={styles.noImageContainer}>
                     <Text style={styles.noImageText}>No Image</Text>
@@ -137,10 +159,13 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginTop: 15,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 10,
   },
   imageStyle: {
     height: '100%',
-    width: '100%',
+    width: '50%',
     borderRadius: 16,
   },
   noImageContainer: {
@@ -155,6 +180,7 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   textContainer: {
+    paddingHorizontal: 10,
     marginTop: 20,
   },
   titleText: {

@@ -20,3 +20,19 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Add this block to set the namespace for the gsbfit module
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+subprojects { project ->
+    if (project.name == 'gsbfit') {
+        project.extensions.findByName("android")?.apply {
+            namespace = "com.gsbfit"
+        }
+    }
+}

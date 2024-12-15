@@ -81,7 +81,7 @@ const SignIn = () => {
             {/* Phone Number Input Section */}
             <TextInput
               style={styles.input}
-              placeholder="Enter your phone number"
+              placeholder="Enter your Email ID"
               onChangeText={text => setEmail(text)}
             />
           </View>

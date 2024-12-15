@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import Icons from '../Icons';
 import profile from '../assets/profile.png';
-import {useNavigation} from '@react-navigation/native';
-import {launchImageLibrary} from 'react-native-image-picker';
-import {useDispatch, useSelector} from 'react-redux';
-import {updateUser, uploadProfileImage} from '../redux/authSlice'; // Adjust the path as needed
-import {RootState} from '../redux/store';
-import {retrieveData} from '../utils/Storage';
-import {BASE_URL, postData} from '../global/server';
+import { useNavigation } from '@react-navigation/native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateUser, uploadProfileImage } from '../redux/authSlice'; // Adjust the path as needed
+import { RootState } from '../redux/store';
+import { retrieveData } from '../utils/Storage';
+import { BASE_URL, postData } from '../global/server';
 import axios from 'axios';
 
 const UserProfileForm = () => {
@@ -74,9 +74,9 @@ const UserProfileForm = () => {
           email: email,
           phoneNumber: phoneNumber,
           address: address,
-          userImg: {secure_url: imgUrl},
+          userImg: { secure_url: imgUrl },
         },
-        {headers: {token: `Bearer ${token}`}},
+        { headers: { token: `Bearer ${token}` } },
       );
 
       dispatch(updateUser(updatedUser));
@@ -90,7 +90,7 @@ const UserProfileForm = () => {
           phoneNumber: phoneNumber,
           address: address,
         },
-        {headers: {token: `Bearer ${token}`}},
+        { headers: { token: `Bearer ${token}` } },
       );
 
       dispatch(updateUser(updatedUser.data));
@@ -126,10 +126,10 @@ const UserProfileForm = () => {
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Text style={styles.title}>View Profile</Text>
-        <View style={{width: 25}}></View>
+        <View style={{ width: 25 }}></View>
       </View>
       <View style={styles.profileImageContainer}>
-        <Image source={{uri: profileImage}} style={styles.profileImage} />
+        <Image source={{ uri: profileImage }} style={styles.profileImage} />
         <TouchableOpacity
           onPress={handleImagePicker}
           style={styles.editIconContainer}>
@@ -161,7 +161,7 @@ const UserProfileForm = () => {
           placeholderTextColor={'gray'}
         />
         <TextInput
-          style={[styles.input, {height: 100, textAlignVertical: 'top'}]}
+          style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
           placeholder="Address"
           value={address}
           onChangeText={text => setAddress(text)}

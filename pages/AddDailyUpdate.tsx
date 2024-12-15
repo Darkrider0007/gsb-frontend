@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,12 +6,17 @@ import {
   TouchableOpacity,
   View,
   Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  Keyboard,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Icons from '../Icons';
-import {launchImageLibrary} from 'react-native-image-picker';
-import {BASE_URL} from '../global/server';
-import {retrieveData} from '../utils/Storage';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { BASE_URL } from '../global/server';
+import { retrieveData } from '../utils/Storage';
 import axios from 'axios';
 
 const AddDailyUpdate = () => {
@@ -21,7 +26,11 @@ const AddDailyUpdate = () => {
   const [description, setDescription] = useState('');
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
-  const [submitting, setSubmitting] = useState(false); // State to track whether an update is being submitted
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  const descriptionInputRef = useRef(null);
 
   useEffect(() => {
     const getTokenUserId = async () => {
@@ -31,6 +40,19 @@ const AddDailyUpdate = () => {
       setUserId(storedUserId);
     };
     getTokenUserId();
+  }, []);
+
+  useEffect(() => {
+    const keyboardDidShow = () => setKeyboardVisible(true);
+    const keyboardDidHide = () => setKeyboardVisible(false);
+
+    Keyboard.addListener('keyboardDidShow', keyboardDidShow);
+    Keyboard.addListener('keyboardDidHide', keyboardDidHide);
+
+    return () => {
+      Keyboard.removeListener('keyboardDidShow', keyboardDidShow);
+      Keyboard.removeListener('keyboardDidHide', keyboardDidHide);
+    };
   }, []);
 
   const handleImageUpload = () => {
@@ -46,16 +68,17 @@ const AddDailyUpdate = () => {
           response.assets.length > 0
         ) {
           const selectedImage = response.assets[0];
-          setImage({uri: selectedImage.uri});
+          setImage({ uri: selectedImage.uri });
         }
       },
     );
   };
 
   const handleFormSubmit = async () => {
+    if (!title || !description || !image) return; // Ensure form validation
+    setLoading(true);
     if (!submitting) {
-      // Check if an update is already being submitted
-      setSubmitting(true); // Set submitting state to true to prevent resubmission
+      setSubmitting(true);
       try {
         if (!token) {
           console.log('Token not available');
@@ -80,70 +103,91 @@ const AddDailyUpdate = () => {
         });
 
         if (response.status === 200) {
-          navigation.navigate('DailyUpdates'); // Navigate to DailyUpdates screen
+          navigation.navigate('DailyUpdates');
         } else {
           console.log('Upload failed');
         }
       } catch (err) {
         console.error('Error:', err);
       } finally {
-        setSubmitting(false); // Reset submitting state after submission completes
+        setSubmitting(false);
+        setLoading(false);
       }
     }
   };
 
+  const isFormValid = title && description && image; // Check form validity
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Add Update</Text>
-        <View style={{width: 25}}></View>
-      </View>
-      <View style={styles.content}>
-        <TouchableOpacity
-          style={[styles.inputContainer, styles.imageInput]}
-          onPress={handleImageUpload}>
-          {image ? (
-            <Image source={image} style={styles.image} />
-          ) : (
-            <View
-              style={{flexDirection: 'column', alignItems: 'center', gap: 5}}>
-              <Icons.MaterialIcons
-                name="add-a-photo"
-                color={'#F6AF24'}
-                size={30}
-              />
-              <Text style={styles.imageText}>Upload Image</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-        <TextInput
-          style={styles.inputContainer}
-          placeholder="Enter your title here..."
-          value={title}
-          onChangeText={setTitle}
-          placeholderTextColor={'gray'}
-        />
-        <TextInput
-          style={[styles.inputContainer, styles.textInput]}
-          placeholder="Enter your update here..."
-          multiline
-          value={description}
-          onChangeText={setDescription}
-          placeholderTextColor={'gray'}
-        />
-        <TouchableOpacity
-          style={[
-            styles.uploadButton,
-            {backgroundColor: submitting ? '#fad791' : '#F6AF24'},
-          ]}
-          onPress={handleFormSubmit}>
-          <Text style={styles.uploadButtonText}>Upload</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Add Today's Update</Text>
+          <View style={{ width: 25 }}></View>
+        </View>
+        <View style={styles.content}>
+          <TouchableOpacity
+            style={[styles.inputContainer, styles.imageInput]}
+            onPress={handleImageUpload}>
+            {image ? (
+              <Image source={image} style={styles.image} />
+            ) : (
+              <View
+                style={{ flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                <Icons.MaterialIcons
+                  name="add-a-photo"
+                  color={'#F6AF24'}
+                  size={30}
+                />
+                <Text style={styles.imageText}>Upload Image</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TextInput
+            style={styles.inputContainer}
+            placeholder="Enter your title here..."
+            value={title}
+            onChangeText={setTitle}
+            placeholderTextColor={'gray'}
+            returnKeyType="next"
+            onSubmitEditing={() => descriptionInputRef.current?.focus()}
+          />
+          <TextInput
+            style={[styles.inputContainer, styles.textInput]}
+            placeholder="Enter your update here..."
+            multiline
+            value={description}
+            onChangeText={setDescription}
+            placeholderTextColor={'gray'}
+            ref={descriptionInputRef}
+          />
+          <TouchableOpacity
+            style={[
+              styles.uploadButton,
+              {
+                backgroundColor: isFormValid ? '#F6AF24' : '#fad791',
+              },
+            ]}
+            onPress={handleFormSubmit}
+            disabled={!isFormValid || submitting}>
+            {loading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text style={styles.uploadButtonText}>
+                {isFormValid ? 'Upload' : 'Fill All Fields'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -153,6 +197,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
@@ -169,6 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 50, // Add padding to prevent button from hiding
   },
   inputContainer: {
     borderWidth: 1,
@@ -180,8 +228,8 @@ const styles = StyleSheet.create({
   },
   imageInput: {
     borderStyle: 'dotted',
-    borderWidth: 2, // Increase border width for spacing between dots
-    borderColor: 'gray', // Same as container border color
+    borderWidth: 2,
+    borderColor: 'gray',
     height: 200,
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,11 +245,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   textInput: {
-    height: 150, // Increase the height as needed
-    textAlignVertical: 'top', // Ensure text starts from the first line
+    height: 150,
+    textAlignVertical: 'top',
   },
   uploadButton: {
-    backgroundColor: '#F6AF24',
     paddingVertical: 10,
     borderRadius: 5,
     alignItems: 'center',

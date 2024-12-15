@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient'; // Import LinearGradient
 import heroImage from '../assets/home/hero.png';
 import CatImg1 from '../assets/home/cat1.png';
@@ -24,20 +24,18 @@ import inner2 from '../assets/home/innerpeace2.png';
 import inner3 from '../assets/home/innerpeace3.png';
 import consultant1 from '../assets/home/consultant1.png';
 import consultant2 from '../assets/home/consultant2.png';
-import success1 from '../assets/home/success1.png';
-import success2 from '../assets/home/success2.png';
 
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Icons from '../Icons';
-import {useNavigation} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {RootState} from '../redux/store';
-import {retrieveData} from '../utils/Storage';
-import {getData} from '../global/server';
-import {updateUser} from '../redux/authSlice';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+import { retrieveData } from '../utils/Storage';
+import { getData } from '../global/server';
+import { updateUser } from '../redux/authSlice';
 import Carousel from '../components/ParalaxCarousel';
 import HomeCarousel from '../components/HomeCarousel';
-import Video from 'react-native-video';
+import SuccessStories from '../components/Home/SuccessStories';
 
 const Categories = [
   {
@@ -108,29 +106,11 @@ const consultant = [
   },
 ];
 
-const Success = [
-  {
-    title: 'Story of Gurpreet Singh Batra',
-    desc: 'Injured and Depression to Founder of GSBPATHY',
-    image: success1,
-    videoUri: require('../assets/localVideo.mp4'),
-  },
-  {
-    title: 'Fitness is key of Success',
-    desc: 'Injured and Depression to Founder of GSBPATHY',
-    image: success2,
-    videoUri:
-      'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  },
-];
+
 
 const Home = () => {
   const navigation = useNavigation();
-  const [currentVideo, setCurrentVideo] = useState(null);
 
-  const handlePress = videoUri => {
-    setCurrentVideo(videoUri);
-  };
   const dispatch = useDispatch();
   const [user, setUser] = useState({});
   const [token, setToken] = useState<string>(''); // State to store token
@@ -174,7 +154,7 @@ const Home = () => {
   const firstName = storedName?.split(' ')[0]; // Extract the left part before the first space
 
   return (
-    <View style={{flex: 1, backgroundColor: 'white'}}>
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
       <View
         style={{
           // backgroundColor: 'red',
@@ -188,8 +168,8 @@ const Home = () => {
           onPress={() => {
             navigation.navigate('ProfileInfo');
           }}
-          style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-          <Text style={{fontWeight: '500', color: 'black'}}>
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ fontWeight: '500', color: 'black' }}>
             Hi, {firstName}
           </Text>
           <Icons.MaterialCommunityIcons
@@ -202,7 +182,7 @@ const Home = () => {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={{width: '100%', backgroundColor: 'white'}}>
+        style={{ width: '100%', backgroundColor: 'white' }}>
         {/* <View style={styles.heroContainer}>
           <View style={{width: '60%'}}>
             <Text style={{fontWeight: '600', color: 'black', fontSize: 18}}>
@@ -235,7 +215,7 @@ const Home = () => {
         <HomeCarousel />
 
         <View style={styles.categoryContainer}>
-          <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: 'black' }}>
             Categories
           </Text>
           <View
@@ -256,9 +236,9 @@ const Home = () => {
                   navigation.navigate(`${category.link}`);
                 }}
                 key={index}
-                style={{width: '30%', alignItems: 'center'}}>
+                style={{ width: '30%', alignItems: 'center' }}>
                 <Image source={category.image} />
-                <Text style={{color: 'black', fontSize: 15, fontWeight: '800'}}>
+                <Text style={{ color: 'black', fontSize: 15, fontWeight: '800' }}>
                   {category.title}
                 </Text>
               </TouchableOpacity>
@@ -267,8 +247,8 @@ const Home = () => {
         </View>
         {/* Inner peace */}
         <View style={styles.categoryContainer}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: 'black' }}>
               INNERPEACE
             </Text>
             {/* <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -301,15 +281,15 @@ const Home = () => {
                   borderRadius: 12,
                   // padding: 10,
                 }}>
-                <View style={{padding: 20}}>
+                <View style={{ padding: 20 }}>
                   <Text
-                    style={{fontSize: 20, fontWeight: '600', color: 'black'}}>
+                    style={{ fontSize: 20, fontWeight: '600', color: 'black' }}>
                     {item.name}
                   </Text>
-                  <Text style={{color: 'black'}}>
+                  <Text style={{ color: 'black' }}>
                     {item.excerise} Exercises | {item.time} minutes{' '}
                   </Text>
-                  <View style={{flexDirection: 'row', gap: 10, marginTop: 15}}>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 15 }}>
                     <TouchableOpacity
                       style={{
                         backgroundColor: 'white',
@@ -321,9 +301,9 @@ const Home = () => {
                         navigation.navigate(`${item.name}`);
                       }}>
                       {item.name === 'Diet' ? (
-                        <Text style={{color: '#FFA800'}}>view more</Text>
+                        <Text style={{ color: '#FFA800' }}>view more</Text>
                       ) : (
-                        <Text style={{color: '#FFA800'}}>watch now</Text>
+                        <Text style={{ color: '#FFA800' }}>watch now</Text>
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -336,7 +316,7 @@ const Home = () => {
                       onPress={() => {
                         navigation.navigate('Subscription');
                       }}>
-                      <Text style={{color: '#FFA800'}}>subscribe</Text>
+                      <Text style={{ color: '#FFA800' }}>subscribe</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -350,7 +330,7 @@ const Home = () => {
                   }}>
                   <Image
                     source={item.image}
-                    style={{height: '100%', width: '100%'}}
+                    style={{ height: '100%', width: '100%' }}
                   />
                 </View>
               </View>
@@ -359,8 +339,8 @@ const Home = () => {
         </View>
         {/* consultant  */}
         <View style={styles.categoryContainer}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: 'black' }}>
               CONSULTANT
             </Text>
           </View>
@@ -394,16 +374,16 @@ const Home = () => {
                   }}>
                   <Image
                     source={item.image}
-                    style={{height: '100%', width: '100%', borderRadius: 16}}
+                    style={{ height: '100%', width: '100%', borderRadius: 16 }}
                   />
                 </View>
-                <View style={{padding: 20}}>
+                <View style={{ padding: 20 }}>
                   <Text
-                    style={{fontSize: 20, fontWeight: '600', color: 'black'}}>
+                    style={{ fontSize: 20, fontWeight: '600', color: 'black' }}>
                     {item.title}
                   </Text>
-                  <Text style={{color: 'black'}}>{item.desc}</Text>
-                  <View style={{flexDirection: 'row', gap: 10, marginTop: 15}}>
+                  <Text style={{ color: 'black' }}>{item.desc}</Text>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 15 }}>
                     <TouchableOpacity
                       onPress={() => {
                         navigation.navigate('VideoPlayer', {
@@ -418,7 +398,7 @@ const Home = () => {
                         alignItems: 'center',
                       }}>
                       <Icons.AntDesign name="play" color={'red'} size={18} />
-                      <Text style={{color: '#FFA800', fontSize: 16}}>
+                      <Text style={{ color: '#FFA800', fontSize: 16 }}>
                         Watch Video
                       </Text>
                     </TouchableOpacity>
@@ -430,44 +410,7 @@ const Home = () => {
         </View>
 
         {/* succes stories */}
-        <View style={styles.categoryContainer}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text style={{fontSize: 20, fontWeight: '800', color: 'black'}}>
-              SUCCESS STORIES
-            </Text>
-          </View>
-
-          <View style={styles.videoContainer}>
-            {Success.map((item, index) => (
-              <View key={index} style={{width: '100%', borderRadius: 12}}>
-                <TouchableOpacity onPress={() => handlePress(item.videoUri)}>
-                  {currentVideo === item.videoUri ? (
-                    <Video
-                      source={
-                        typeof item.videoUri === 'string'
-                          ? {uri: item.videoUri}
-                          : item.videoUri
-                      }
-                      style={styles.video}
-                      resizeMode="cover"
-                      paused={currentVideo !== item.videoUri}
-                      controls
-                    />
-                  ) : (
-                    <Image source={item.image} style={styles.thumbnail} />
-                  )}
-                </TouchableOpacity>
-                <View style={{marginTop: 20}}>
-                  <Text
-                    style={{fontSize: 20, fontWeight: '600', color: 'black'}}>
-                    {item.title}
-                  </Text>
-                  <Text style={{color: 'black'}}>{item.desc}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
+        <SuccessStories />
       </ScrollView>
     </View>
   );

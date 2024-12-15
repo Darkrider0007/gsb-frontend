@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import Icons from '../Icons';
-import {useNavigation} from '@react-navigation/native';
-import {retrieveData} from '../utils/Storage';
+import { useNavigation } from '@react-navigation/native';
+import { retrieveData } from '../utils/Storage';
 import axios from 'axios';
-import {BASE_URL} from '../global/server';
+import { BASE_URL } from '../global/server';
 import moment from 'moment';
 
 const DailyUpdates = () => {
@@ -20,6 +20,7 @@ const DailyUpdates = () => {
   const [dailyUpdates, setDailyUpdates] = useState([]);
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
+  const [loading, setLoading] = useState(true); // To show feedback during API calls
 
   const getDailyUpdates = async () => {
     try {
@@ -28,10 +29,11 @@ const DailyUpdates = () => {
           token: `Bearer ${token}`,
         },
       });
-      console.log('response ', response.data);
       setDailyUpdates(response.data.reverse());
     } catch (error) {
       console.log('Error:', error);
+    } finally {
+      setLoading(false); // Stop loading once the API call is complete
     }
   };
 
@@ -63,35 +65,49 @@ const DailyUpdates = () => {
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Text style={styles.title}>My Daily Updates</Text>
-        <View style={{width: 25}}></View>
+        <View style={{ width: 25 }}></View>
       </View>
-      <ScrollView style={styles.scrollView}>
-        {dailyUpdates.map((item, index) => {
-          console.log('img url ', item?.updateImg?.secure_url);
-          const imageUrl = item?.updateImg?.secure_url;
-          const formattedDate = moment(item.createdAt).format(
-            'MMMM Do YYYY, h:mm:ss a',
-          );
-          return (
-            <View key={index} style={styles.updateCard}>
-              <View style={styles.imageContainer}>
-                {imageUrl ? (
-                  <Image source={{uri: imageUrl}} style={styles.imageStyle} />
-                ) : (
-                  <View style={styles.noImageContainer}>
-                    <Text style={styles.noImageText}>No Image</Text>
-                  </View>
-                )}
+      {loading ? (
+        <Text style={styles.loadingText}>Loading updates...</Text>
+      ) : dailyUpdates.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            You haven’t added any updates yet!
+          </Text>
+          <Text style={styles.emptySubText}>
+            Click the "Add Update" button below to track your daily progress.
+          </Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.scrollView}>
+          {dailyUpdates.map((item, index) => {
+            const imageUrl = item?.updateImg?.secure_url;
+            const formattedDate = moment(item.createdAt).format(
+              'MMMM Do YYYY, h:mm:ss a',
+            );
+            return (
+              <View key={index} style={styles.updateCard}>
+                <View style={styles.imageContainer}>
+                  {imageUrl ? (
+                    <Image source={{ uri: imageUrl }} style={styles.imageStyle} />
+                  ) : (
+                    <View style={styles.noImageContainer}>
+                      <Text style={styles.noImageText}>No Image</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.textContainer}>
+                  <Text style={styles.titleText}>{item?.title}</Text>
+                  <Text style={styles.descriptionText}>
+                    {item?.description}
+                  </Text>
+                  <Text style={styles.dateText}>{formattedDate}</Text>
+                </View>
               </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.titleText}>{item?.title}</Text>
-                <Text style={styles.descriptionText}>{item?.description}</Text>
-                <Text style={styles.dateText}>{formattedDate}</Text>
-              </View>
-            </View>
-          );
-        })}
-      </ScrollView>
+            );
+          })}
+        </ScrollView>
+      )}
       <View style={styles.addButtonContainer}>
         <TouchableOpacity
           style={styles.submitButton}
@@ -187,5 +203,30 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#F6AF24',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: 'gray',
+    textAlign: 'center',
+  },
+  loadingText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 16,
+    color: 'gray',
+    marginTop: 20,
   },
 });
