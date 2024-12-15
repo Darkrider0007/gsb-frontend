@@ -135,7 +135,8 @@ const Home = () => {
 
   useEffect(() => {
     const userData = async () => {
-      const response = await getData(`/api/user/find/${userId}`, token);
+      const storedUserId = await retrieveData('userId');
+      const response = await getData(`/api/user/find/${storedUserId}`, token);
       console.log('response ', response);
       setUser(response);
     };

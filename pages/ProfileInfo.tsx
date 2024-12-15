@@ -1,22 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import Icons from '../Icons';
 import profile from '../assets/profile.png';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateUser, uploadProfileImage } from '../redux/authSlice'; // Adjust the path as needed
+import { updateUser } from '../redux/authSlice';
 import { RootState } from '../redux/store';
 import { retrieveData } from '../utils/Storage';
-import { BASE_URL, postData } from '../global/server';
+import { BASE_URL } from '../global/server';
 import axios from 'axios';
 
 const UserProfileForm = () => {
@@ -26,9 +30,11 @@ const UserProfileForm = () => {
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber);
   const [address, setAddress] = useState(user?.address);
   const [profileImage, setProfileImage] = useState(
-    user?.userImg?.secure_url || Image.resolveAssetSource(profile).uri,
+    user?.userImg || Image.resolveAssetSource(profile).uri,
   );
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
@@ -39,65 +45,51 @@ const UserProfileForm = () => {
     };
     getToken();
 
-    console.log('user ', user?.data);
+    console.log('user ', user);
   }, []);
 
-  const handleUploadProfileImage = async () => {
+  const handleSubmit = async () => {
+    setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('file', {
-        uri: profileImage,
-        type: 'image/jpeg',
-        name: 'profileImage.jpg',
-      });
-      const response = await postData(
-        `/api/user/upload-profile-image/${user?._id}`,
+
+      formData.append('name', fullName);
+      formData.append('phoneNumber', phoneNumber);
+      formData.append('address', address);
+
+      if (profileImage && profileImage !== user?.userImg?.secure_url) {
+        formData.append('file', {
+          uri: profileImage,
+          name: 'profile.jpg',
+          type: 'image/jpeg',
+        });
+      }
+
+      const response = await axios.put(
+        `${BASE_URL}/api/user/${user?._id}`,
         formData,
-        token,
-        'media',
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            token: `Bearer ${token}`,
+          },
+        }
       );
-      if (response && response.secure_url) {
-        return response.secure_url;
+
+      if (response.status === 200) {
+        console.log('Updated user data:', response.data);
+        dispatch(updateUser(response.data));
+        Alert.alert('Successfully Updated');
+        navigation.goBack();
+      } else {
+        throw new Error('Failed to update user data');
       }
     } catch (error) {
-      console.error('Error uploading profile image:', error);
+      console.error('Error updating user data:', error);
+      Alert.alert('Failed to update user data');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleSubmit = async () => {
-    const imgUrl = await handleUploadProfileImage();
-    if (imgUrl) {
-      const updatedUser = await axios.put(
-        `${BASE_URL}/api/user/${user?._id}`,
-        {
-          name: fullName,
-          email: email,
-          phoneNumber: phoneNumber,
-          address: address,
-          userImg: { secure_url: imgUrl },
-        },
-        { headers: { token: `Bearer ${token}` } },
-      );
-
-      dispatch(updateUser(updatedUser));
-      console.log('Updated user data:', updatedUser);
-    } else {
-      const updatedUser = await axios.put(
-        `${BASE_URL}/api/user/${user?._id}`,
-        {
-          name: fullName,
-          email: email,
-          phoneNumber: phoneNumber,
-          address: address,
-        },
-        { headers: { token: `Bearer ${token}` } },
-      );
-
-      dispatch(updateUser(updatedUser.data));
-      console.log('Updated user data:', updatedUser.data);
-    }
-    Alert.alert('Successfully Updated');
-    navigation.goBack();
   };
 
   const handleImagePicker = () => {
@@ -119,60 +111,78 @@ const UserProfileForm = () => {
     );
   };
 
+  const isSubmitDisabled = !phoneNumber || phoneNumber.length !== 10;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
-        </TouchableOpacity>
-        <Text style={styles.title}>View Profile</Text>
-        <View style={{ width: 25 }}></View>
-      </View>
-      <View style={styles.profileImageContainer}>
-        <Image source={{ uri: profileImage }} style={styles.profileImage} />
-        <TouchableOpacity
-          onPress={handleImagePicker}
-          style={styles.editIconContainer}>
-          <Icons.AntDesign name="edit" color={'#F6AF24'} size={30} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={fullName}
-          onChangeText={text => setFullName(text)}
-          placeholderTextColor={'gray'}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={text => setEmail(text)}
-          keyboardType="email-address"
-          placeholderTextColor={'gray'}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number"
-          value={phoneNumber}
-          onChangeText={text => setPhoneNumber(text)}
-          keyboardType="phone-pad"
-          placeholderTextColor={'gray'}
-        />
-        <TextInput
-          style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-          placeholder="Address"
-          value={address}
-          onChangeText={text => setAddress(text)}
-          multiline
-          placeholderTextColor={'gray'}
-        />
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Submit</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
+          </TouchableOpacity>
+          <Text style={styles.title}>View Profile</Text>
+          <View style={{ width: 25 }}></View>
+        </View>
+        <View style={styles.profileImageContainer}>
+          <Image source={{ uri: profileImage }} style={styles.profileImage} />
+          <TouchableOpacity
+            onPress={handleImagePicker}
+            style={styles.editIconContainer}
+          >
+            <Icons.AntDesign name="edit" color={'#F6AF24'} size={30} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            value={fullName}
+            onChangeText={text => setFullName(text)}
+            placeholderTextColor={'gray'}
+          />
+          <TextInput
+            style={[styles.input, { backgroundColor: '#f5f5f5' }]} // Slightly different style to indicate disabled
+            placeholder="Email"
+            value={email}
+            editable={false} // Disable the email field
+            placeholderTextColor={'gray'}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            value={phoneNumber}
+            onChangeText={text => setPhoneNumber(text)}
+            keyboardType="phone-pad"
+            placeholderTextColor={'gray'}
+          />
+          <TextInput
+            style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+            placeholder="Address"
+            value={address}
+            onChangeText={text => setAddress(text)}
+            multiline
+            placeholderTextColor={'gray'}
+          />
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              isSubmitDisabled && { backgroundColor: 'gray' },
+            ]}
+            onPress={handleSubmit}
+            disabled={isSubmitDisabled}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.submitButtonText}>Submit</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
