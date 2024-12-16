@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -17,6 +19,7 @@ import { RootState } from '../../redux/store';
 import { retrieveData } from '../../utils/Storage';
 import { BASE_URL } from '../../global/server';
 import axios from 'axios';
+import DatePicker from 'react-native-date-picker'; // Import the date picker
 
 const Name = () => {
   const navigation = useNavigation();
@@ -24,10 +27,13 @@ const Name = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [dob, setDob] = useState<string>('');
+  const [openCalendar, setOpenCalendar] = useState<boolean>(false); // State to control the calendar visibility
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [error, setError] = useState<{ [key: string]: string }>({});
   const [token, setToken] = useState<string>('');
   const userId = useSelector((state: RootState) => state.auth.user?._id);
   const storedName = useSelector((state: RootState) => state.auth?.user?.name);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -63,15 +69,14 @@ const Name = () => {
     setError(prev => ({ ...prev, address: '' }));
   };
 
-  const handleDobChange = (text: string) => {
-    // Format input as DD/MM/YYYY
-    const formatted = text
-      .replace(/\D/g, '')
-      .replace(/(\d{2})(\d)/, '$1/$2')
-      .replace(/(\d{2})(\d)/, '$1/$2')
-      .substr(0, 10);
-    setDob(formatted);
+  const handleDobChange = (date: Date) => {
+    const formattedDate = date
+      .toLocaleDateString('en-GB')
+      .replace(/-/g, '/');
+    setDob(formattedDate);
+    setSelectedDate(date);
     setError(prev => ({ ...prev, dob: '' }));
+    setOpenCalendar(false);
   };
 
   const validateInputs = () => {
@@ -100,11 +105,8 @@ const Name = () => {
     }
 
     // Validate date of birth
-    const dobRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/(19|20)\d\d$/;
     if (!dob.trim()) {
-      newErrors.dob = 'Please enter your date of birth';
-    } else if (!dobRegex.test(dob.trim())) {
-      newErrors.dob = 'Please enter a valid date in DD/MM/YYYY format';
+      newErrors.dob = 'Please select your date of birth';
     }
 
     setError(newErrors);
@@ -118,11 +120,17 @@ const Name = () => {
     }
 
     const url = `${BASE_URL}/api/user/${userId}`;
+    setSubmitting(true);
 
     try {
       const response = await axios.put(
         url,
-        { name: name.trim() },
+        {
+          name: name.trim(),
+          phoneNumber: phoneNumber.trim(),
+          address: address.trim(),
+          dob: dob.trim()
+        },
         { headers: { token: `Bearer ${token}` } },
       );
 
@@ -223,14 +231,32 @@ const Name = () => {
             { multiline: true, numberOfLines: 3 },
           )}
 
-          {renderInput(
-            'Date of Birth',
-            dob,
-            handleDobChange,
-            'dob',
-            'DD/MM/YYYY',
-            { keyboardType: 'numeric', maxLength: 10 },
-          )}
+          <View>
+            <Text style={styles.inputLabel}>Date of Birth</Text>
+            <TouchableOpacity
+              style={[
+                styles.inputContainer,
+                error.dob ? styles.inputError : null,
+              ]}
+              onPress={() => setOpenCalendar(true)}>
+              <Text style={styles.input}>
+                {dob || 'Select your date of birth'}
+              </Text>
+            </TouchableOpacity>
+            {error.dob ? (
+              <Text style={styles.errorText}>{error.dob}</Text>
+            ) : null}
+          </View>
+
+          <DatePicker
+            modal
+            open={openCalendar}
+            date={selectedDate || new Date()}
+            mode="date"
+            maximumDate={new Date()}
+            onConfirm={(date) => handleDobChange(date)}
+            onCancel={() => setOpenCalendar(false)}
+          />
         </View>
 
         <TouchableOpacity
@@ -240,8 +266,15 @@ const Name = () => {
               ? styles.buttonDisabled
               : null,
           ]}
-          onPress={handleNextStep}>
-          <Text style={styles.buttonText}>Next Step</Text>
+          onPress={handleNextStep}
+          disabled={!(name.trim() && phoneNumber.trim() && address.trim() && dob.trim()) || submitting}
+        >
+
+          {
+            submitting ?
+              <ActivityIndicator size="small" color="white" /> :
+              <Text style={styles.buttonText}>Next Step</Text>
+          }
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

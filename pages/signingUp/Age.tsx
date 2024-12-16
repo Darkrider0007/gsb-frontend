@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
@@ -24,6 +25,7 @@ const Weight = () => {
   const [token, setToken] = useState<string>(''); // State to store token
   const userId = useSelector((state: RootState) => state.auth.user._id); // Fetch user ID from Redux store, corrected property access
   const storedAge = useSelector((state: RootState) => state.auth.user.age); // Fetch user name from Redux store
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -52,7 +54,7 @@ const Weight = () => {
   const handleNextStep = async () => {
     const url = `${BASE_URL}/api/user/${userId}`;
 
-    console.log(url);
+    setSubmitting(true);
 
     try {
       const response = await axios.put(
@@ -68,6 +70,8 @@ const Weight = () => {
       }
     } catch (error) {
       console.error('Error updating user:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -102,7 +106,10 @@ const Weight = () => {
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Next Step</Text>
+        {
+          submitting ? <ActivityIndicator color={'white'} /> :
+            <Text style={styles.buttonText}>Next Step</Text>
+        }
       </TouchableOpacity>
     </View>
   );

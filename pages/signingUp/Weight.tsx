@@ -1,17 +1,18 @@
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icons from '../../Icons';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../redux/store';
-import {retrieveData} from '../../utils/Storage';
-import {BASE_URL} from '../../global/server'; // Assuming BASE_URL is exported from here
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import { retrieveData } from '../../utils/Storage';
+import { BASE_URL } from '../../global/server'; // Assuming BASE_URL is exported from here
 import axios from 'axios';
 
 const Weight = () => {
@@ -26,7 +27,7 @@ const Weight = () => {
     (state: RootState) => state.auth.user?.weight,
   ); // Fetch user name from Redux store
 
-  console.log(storedWeight);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -53,12 +54,12 @@ const Weight = () => {
 
   const handleNextStep = async () => {
     const url = `${BASE_URL}/api/user/${userId}`;
-
+    setSubmitting(true);
     try {
       const response = await axios.put(
         url,
-        {weight: `${weight} ${unit}`},
-        {headers: {token: `Bearer ${token}`}},
+        { weight: `${weight} ${unit}` },
+        { headers: { token: `Bearer ${token}` } },
       );
 
       console.log('Response from update:', response);
@@ -70,12 +71,14 @@ const Weight = () => {
       }
     } catch (error) {
       console.error('Error updating user:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={{marginBottom: 10}}>
+      <View style={{ marginBottom: 10 }}>
         <TouchableOpacity
           onPress={() => {
             navigation.goBack();
@@ -104,8 +107,9 @@ const Weight = () => {
             keyboardType="numeric"
             onChangeText={handleWeightChange}
             value={weight}
-            placeholderTextColor={'black'}
+            placeholderTextColor={'gray'}
             placeholder="60"
+
           />
           <Text style={styles.unit}>|</Text>
           <Text style={styles.unit}>{unit}</Text>
@@ -113,7 +117,10 @@ const Weight = () => {
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Next Step</Text>
+        {
+          submitting ? <ActivityIndicator color={'white'} /> :
+            <Text style={styles.buttonText}>Next Step</Text>
+        }
       </TouchableOpacity>
     </View>
   );

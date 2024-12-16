@@ -1,16 +1,16 @@
 // Goal.tsx
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import Icons from '../../Icons';
 import weight from '../../assets/weightMachine.png';
 import mental from '../../assets/mentalHealth.png';
-import {completeSignup} from '../../redux/authSlice';
-import {BASE_URL} from '../../global/server';
-import {RootState} from '../../redux/store';
-import {retrieveData, storeData} from '../../utils/Storage';
+import { completeSignup } from '../../redux/authSlice';
+import { BASE_URL } from '../../global/server';
+import { RootState } from '../../redux/store';
+import { retrieveData, storeData } from '../../utils/Storage';
 
 const Goal = () => {
   const navigation = useNavigation();
@@ -52,8 +52,8 @@ const Goal = () => {
       try {
         const response = await axios.put(
           url,
-          {goal: currentGoal},
-          {headers: {token: `Bearer ${token}`}},
+          { goal: currentGoal },
+          { headers: { token: `Bearer ${token}` } },
         );
 
         if (response.status === 200) {
@@ -91,7 +91,7 @@ const Goal = () => {
       await storeData('isAuth', true);
       navigation.reset({
         index: 0,
-        routes: [{name: 'TabNavigator'}],
+        routes: [{ name: 'TabNavigator' }],
       });
     }
   };
@@ -125,18 +125,18 @@ const Goal = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{marginBottom: 10}}>
+      <View style={{ marginBottom: 10 }}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Text style={styles.title}>What's your goal?</Text>
-        <Text style={{color: 'black', fontSize: 16, marginVertical: 10}}>
+        <Text style={{ color: 'black', fontSize: 16, marginVertical: 10 }}>
           You can select more than one. Don't worry, you can always change it
           later
         </Text>
       </View>
 
-      <View style={{flexDirection: 'column', gap: 40}}>
+      <View style={{ flexDirection: 'column', gap: 40 }}>
         {goalOptions.map(goal => (
           <TouchableOpacity
             key={goal.id}
@@ -148,7 +148,7 @@ const Goal = () => {
               },
             ]}>
             {goal.type === 'image' ? (
-              <Image source={goal.image} style={{width: 20, height: 20}} />
+              <Image source={goal.image} style={{ width: 20, height: 20 }} />
             ) : goal.id === 'Diabetes' ? (
               <Icons.MaterialCommunityIcons
                 name={goal.icon}
@@ -164,7 +164,7 @@ const Goal = () => {
       </View>
 
       <TouchableOpacity
-        style={[styles.button, {opacity: selectedGoals.length === 0 ? 0.5 : 1}]}
+        style={[styles.button, { opacity: selectedGoals.length === 0 ? 0.5 : 1 }]}
         disabled={selectedGoals.length === 0}
         onPress={() => navigateToNextSelectedGoal()}>
         <Text style={styles.buttonText}>Next Step</Text>

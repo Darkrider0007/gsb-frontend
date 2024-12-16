@@ -1,17 +1,18 @@
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icons from '../../Icons';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../redux/store';
-import {retrieveData} from '../../utils/Storage';
-import {BASE_URL} from '../../global/server';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import { retrieveData } from '../../utils/Storage';
+import { BASE_URL } from '../../global/server';
 import axios from 'axios';
 
 const GoalHeight = () => {
@@ -25,6 +26,7 @@ const GoalHeight = () => {
   const storedWeight = useSelector(
     (state: RootState) => state.auth.user?.goalHeight,
   ); // Fetch user name from Redux store
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -55,8 +57,8 @@ const GoalHeight = () => {
     try {
       const response = await axios.put(
         url,
-        {goalHeight: `${goalHeight} ${unit}`},
-        {headers: {token: `Bearer ${token}`}},
+        { goalHeight: `${goalHeight} ${unit}` },
+        { headers: { token: `Bearer ${token}` } },
       );
 
       console.log('Response from update:', response);
@@ -73,7 +75,7 @@ const GoalHeight = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{marginBottom: 10}}>
+      <View style={{ marginBottom: 10 }}>
         <TouchableOpacity
           onPress={() => {
             navigation.goBack();
@@ -111,7 +113,11 @@ const GoalHeight = () => {
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Next Step</Text>
+        {
+          submitting ? <ActivityIndicator color={'white'} /> :
+
+            <Text style={styles.buttonText}>Next Step</Text>
+        }
       </TouchableOpacity>
     </View>
   );
