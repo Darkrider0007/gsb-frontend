@@ -65,11 +65,11 @@ const SignUp = () => {
 
   return (
     <SafeAreaView>
-      <StatusBar
+      { /*<StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         translucent
         backgroundColor="transparent"
-      />
+      />*/}
 
       <View style={{ position: 'relative', height: '100%' }}>
         <Carousel />

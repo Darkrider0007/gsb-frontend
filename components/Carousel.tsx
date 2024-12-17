@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -58,12 +58,12 @@ const Carousel = () => {
     },
   ];
 
-  const renderItem = ({item}: {item: any}) => {
+  const renderItem = ({ item }: { item: any }) => {
     return (
       <View>
         <Image
           source={item.image}
-          style={{height: carouselHeight, width: screenWidth}}
+          style={{ height: carouselHeight, width: screenWidth }}
         />
         <LinearGradient
           colors={['transparent', 'rgba(255, 170, 0, 1.0)']}
@@ -125,7 +125,7 @@ const Carousel = () => {
             key={index}
             style={[
               styles.dotIndicator,
-              {backgroundColor: activeIndex === index ? 'white' : 'gray'},
+              { backgroundColor: activeIndex === index ? 'white' : 'gray' },
             ]}
           />
         ))}
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     position: 'absolute',
     width: '100%',
-    top: 10,
+    top: '7%',
     flexDirection: 'row',
     justifyContent: 'flex-end',
     right: 10,

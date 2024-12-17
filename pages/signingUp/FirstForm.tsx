@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,14 +7,14 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icons from '../../Icons';
 import gsbLogo from '../../assets/gsbtransparent.png';
-import {completeSignup} from '../../redux/authSlice';
-import {useDispatch} from 'react-redux';
-import {retrieveData, storeData} from '../../utils/Storage';
-import {getData} from '../../global/server';
+import { completeSignup } from '../../redux/authSlice';
+import { useDispatch } from 'react-redux';
+import { retrieveData, storeData } from '../../utils/Storage';
+import { getData } from '../../global/server';
 
 // Type definitions for better type safety
 type RootStackParamList = {
@@ -142,10 +142,10 @@ const FirstForm = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const dispatch = useDispatch();
   const route = useRoute();
-  const {nextIndex, selectedGoals, onReturn} = route.params || {};
+  const { nextIndex, selectedGoals, onReturn } = route.params || {};
 
   const [selectedAnswers, setSelectedAnswers] = useState(
-    Array.from({length: ServiceData.length}, () => new Set()),
+    Array.from({ length: ServiceData.length }, () => new Set()),
   );
   const [isFormComplete, setIsFormComplete] = useState(false); // New state
   const [token, setToken] = useState('');
@@ -213,8 +213,8 @@ const FirstForm = () => {
           selectedGoals[nextIndex] === 2
             ? 'SecondForm'
             : selectedGoals[nextIndex] === 3
-            ? 'ThirdForm'
-            : 'FirstForm';
+              ? 'ThirdForm'
+              : 'FirstForm';
 
         navigation.navigate(nextPage, {
           nextIndex: nextIndex + 1,
@@ -236,7 +236,7 @@ const FirstForm = () => {
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Image source={gsbLogo} />
-        <View style={{width: 25}} />
+        <View style={{ width: 25 }} />
       </View>
 
       <ScrollView
@@ -280,7 +280,7 @@ const FirstForm = () => {
 
         <TouchableOpacity
           onPress={handleSubmit}
-          style={[styles.submitButton, {opacity: isFormComplete ? 1 : 0.5}]}
+          style={[styles.submitButton, { opacity: isFormComplete ? 1 : 0.5 }]}
           disabled={!isFormComplete}>
           <Text style={styles.submitButtonText}>SUBMIT</Text>
         </TouchableOpacity>

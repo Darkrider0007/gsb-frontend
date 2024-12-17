@@ -146,6 +146,8 @@ const Name = () => {
         submit: 'An error occurred while saving your data',
       }));
       Alert.alert('Error', 'Failed to save your data. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 

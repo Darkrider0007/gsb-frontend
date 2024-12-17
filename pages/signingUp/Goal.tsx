@@ -52,7 +52,7 @@ const Goal = () => {
       try {
         const response = await axios.put(
           url,
-          { goal: currentGoal },
+          { goal: selectedGoals },
           { headers: { token: `Bearer ${token}` } },
         );
 
