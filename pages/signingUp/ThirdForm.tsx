@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,90 +6,38 @@ import {
   View,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icons from '../../Icons';
 import gsbLogo from '../../assets/gsbtransparent.png';
-import {completeSignup} from '../../redux/authSlice';
-import {useDispatch} from 'react-redux';
-import {retrieveData, storeData} from '../../utils/Storage';
-import {getData} from '../../global/server';
-
-const ServiceData = [
-  {
-    questionText: 'Do you feel down or hopeless most of the time?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Have you lost interest in activities you used to enjoy?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText:
-      'Do you experience difficulty concentrating or making decisions?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Do you have trouble sleeping or sleeping too much?',
-    options: ['Yes, I have trouble sleeping', 'Yes, I sleep too much', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Do you often feel tired or low on energy?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Do you feel worthless or guilty for no reason?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText:
-      'Have you experienced any changes in your appetite or weight?',
-    options: ['Yes, loss of appetite', 'Yes, increased appetite', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Do you have thoughts of harming yourself or others?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Do you experience mood swings or feel easily irritated?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Do you feel disconnected from friends or family?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-];
+import { retrieveData } from '../../utils/Storage';
+import { getData, BASE_URL } from '../../global/server';
+import axios from 'axios';
 
 const ThirdForm = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
   const route = useRoute();
-  const {nextIndex, selectedGoals, onReturn} = route.params || {};
+  const { nextIndex, selectedGoals, onReturn } = route.params || {};
 
-  const [selectedAnswers, setSelectedAnswers] = useState(
-    Array.from({length: ServiceData.length}, () => new Set()),
-  );
+  const [questions, setQuestions] = useState([]);
+  const [selectedAnswers, setSelectedAnswers] = useState([]);
   const [isFormComplete, setIsFormComplete] = useState(false);
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     const getTokenUserId = async () => {
       try {
         const storedToken = await retrieveData('token');
-        setToken(storedToken);
         const storedUserId = await retrieveData('userId');
-        setUserId(storedUserId);
+        if (storedToken && storedUserId) {
+          setToken(storedToken);
+          setUserId(storedUserId);
+        } else {
+          throw new Error('Token or User ID missing');
+        }
       } catch (error) {
         console.error('Error retrieving token/userId:', error);
       }
@@ -98,51 +46,69 @@ const ThirdForm = () => {
   }, []);
 
   useEffect(() => {
-    // Check if all questions are answered
-    const isComplete = selectedAnswers.every(answerSet => answerSet.size > 0);
+    const fetchQuestions = async () => {
+      try {
+        const data = await getData('/api/depressionQuestions', token);
+        if (Array.isArray(data) && data.length > 0) {
+          setQuestions(data);
+          setSelectedAnswers(Array.from({ length: data.length }, () => new Set()));
+        } else {
+          throw new Error('Invalid data format or empty questions');
+        }
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+
+    if (token) fetchQuestions();
+  }, [token]);
+
+  useEffect(() => {
+    const isComplete = selectedAnswers.every((answerSet) => answerSet.size > 0);
     setIsFormComplete(isComplete);
   }, [selectedAnswers]);
 
-  const handleSingleChoiceSelect = (
-    questionIndex: number,
-    answerIndex: number,
-  ) => {
+  const handleSingleChoiceSelect = (questionIndex, answerIndex) => {
     const newSelectedAnswers = [...selectedAnswers];
     newSelectedAnswers[questionIndex] = new Set([answerIndex]);
     setSelectedAnswers(newSelectedAnswers);
   };
 
   const handleSubmit = async () => {
+    setSubmitting(true);
     try {
-      // Prepare the results
-      const result = ServiceData.map((question, index) => ({
+      const result = questions.map((question, index) => ({
         question: question.questionText,
         selectedOptions: Array.from(selectedAnswers[index]).map(
-          i => question.options[i],
+          (i) => question.options[i]
         ),
       }));
 
-      console.log('Form Results:', result);
+      const res = await axios.put(`${BASE_URL}/api/user/${userId}`, {
+        depressionQuestions: result,
+      });
 
-      // Check if there are more goals to process
+      // console.log('Response from submitting form:', res);
       if (nextIndex < selectedGoals.length) {
         const nextPage =
           selectedGoals[nextIndex] === 2
             ? 'SecondForm'
             : selectedGoals[nextIndex] === 3
-            ? 'ThirdForm'
-            : 'FirstForm';
+              ? 'ThirdForm'
+              : 'FirstForm';
 
-        navigation.navigate(nextPage as never, {
+        navigation.navigate(nextPage, {
           nextIndex: nextIndex + 1,
           selectedGoals,
           onReturn,
         });
       } else {
-        onReturn(); // Go back to the selection page after the last page
+        onReturn();
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -153,15 +119,13 @@ const ThirdForm = () => {
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Image source={gsbLogo} />
-        <View style={{width: 25}} />
+        <View style={{ width: 25 }} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollContainer}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContainer}>
         <Text style={styles.title}>Mental Depression</Text>
 
-        {ServiceData.map((item, questionIndex) => (
+        {questions.map((item, questionIndex) => (
           <View key={questionIndex} style={styles.questionContainer}>
             <Text style={styles.question}>{item.questionText}</Text>
             <View style={styles.answersContainer}>
@@ -176,8 +140,8 @@ const ThirdForm = () => {
                     style={[
                       styles.checkbox,
                       {
-                        backgroundColor: selectedAnswers[questionIndex].has(
-                          answerIndex,
+                        backgroundColor: selectedAnswers[questionIndex]?.has(
+                          answerIndex
                         )
                           ? '#F6AF24'
                           : 'transparent',
@@ -193,9 +157,12 @@ const ThirdForm = () => {
 
         <TouchableOpacity
           onPress={handleSubmit}
-          style={[styles.submitButton, {opacity: isFormComplete ? 1 : 0.5}]}
+          style={[styles.submitButton, { opacity: isFormComplete ? 1 : 0.5 }]}
           disabled={!isFormComplete}>
-          <Text style={styles.submitButtonText}>SUBMIT</Text>
+          {
+            submitting ? <ActivityIndicator color={'white'} /> :
+              <Text style={styles.submitButtonText}>SUBMIT</Text>
+          }
         </TouchableOpacity>
       </ScrollView>
     </View>

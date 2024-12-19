@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,97 +7,30 @@ import {
   ScrollView,
   Image,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icons from '../../Icons';
 import gsbLogo from '../../assets/gsbtransparent.png';
-import {completeSignup} from '../../redux/authSlice';
-import {useDispatch} from 'react-redux';
-import {retrieveData, storeData} from '../../utils/Storage';
-import {getData} from '../../global/server';
-
-const ServiceData = [
-  {
-    questionText: 'What type of diabetes do you have?',
-    options: ['Type 1', 'Type 2', 'Diabetes during pregnancy'],
-    isMultipleChoice: false,
-    isTextInput: false,
-  },
-  {
-    questionText: 'What is your sugar level?',
-    options: [
-      'Fasting. ___________________________',
-      'Postprandial. ___________________________',
-    ],
-    isMultipleChoice: false,
-    isTextInput: true,
-  },
-  {
-    questionText: 'What is your per day insulin dosage?',
-    options: [''],
-    isMultipleChoice: false,
-    isTextInput: true,
-  },
-  {
-    questionText: 'Are you taking any medication for diabetes?',
-    options: [''],
-    isMultipleChoice: false,
-    isTextInput: true,
-  },
-  {
-    questionText: 'What symptoms are you facing?',
-    options: [
-      'Thrist',
-      'Frequent urination',
-      'Fatigue',
-      'Blurry Vision',
-      'Pain in feet / leg',
-    ],
-    isMultipleChoice: true,
-    isTextInput: false,
-  },
-  {
-    questionText: 'Is anyone in your family suffering from diabetes?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-    isTextInput: false,
-  },
-  {
-    questionText: 'You are suffering from diabetes from :',
-    options: [
-      '0-1 years',
-      '1-5 years',
-      '5-10 years',
-      '10-15 years',
-      'More than 15 years',
-    ],
-    isMultipleChoice: false,
-    isTextInput: false,
-  },
-  {
-    questionText: 'Are you taking insulin doses ?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-    isTextInput: false,
-  },
-];
+import { useDispatch } from 'react-redux';
+import { retrieveData } from '../../utils/Storage';
+import { getData, BASE_URL } from '../../global/server';
+import axios from 'axios';
 
 const SecondForm = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
   const route = useRoute();
-  const {nextIndex, selectedGoals, onReturn} = route.params || {};
+  const { nextIndex, selectedGoals, onReturn } = route.params || {};
 
-  const [selectedAnswers, setSelectedAnswers] = useState(
-    Array.from({length: ServiceData.length}, () => new Set()),
-  );
-  const [textInputAnswers, setTextInputAnswers] = useState(
-    Array(ServiceData.length).fill(''),
-  );
+  const [questions, setQuestions] = useState([]);
+  const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [textInputAnswers, setTextInputAnswers] = useState([]);
   const [isFormComplete, setIsFormComplete] = useState(false);
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
-  const textInputRefs = useRef<Array<TextInput | null>>([]);
+  const textInputRefs = useRef([]);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+
 
   useEffect(() => {
     const getTokenUserId = async () => {
@@ -114,29 +47,43 @@ const SecondForm = () => {
   }, []);
 
   useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const data = await getData('/api/diabetesQuestion', token);
+        setQuestions(data);
+        console.log(data);
+
+        // Initialize selected answers and text input states
+        setSelectedAnswers(
+          Array.from({ length: data.length }, () => new Set())
+        );
+        setTextInputAnswers(Array(data.length).fill(''));
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+
+    if (token) fetchQuestions();
+  }, [token]);
+
+  useEffect(() => {
     // Check if all questions are answered
-    const isComplete = ServiceData.every((question, index) => {
+    const isComplete = questions.every((question, index) => {
       if (question.isTextInput) {
         return textInputAnswers[index].trim().length > 0;
       }
-      return selectedAnswers[index].size > 0;
+      return selectedAnswers[index]?.size > 0;
     });
     setIsFormComplete(isComplete);
-  }, [selectedAnswers, textInputAnswers]);
+  }, [selectedAnswers, textInputAnswers, questions]);
 
-  const handleSingleChoiceSelect = (
-    questionIndex: number,
-    answerIndex: number,
-  ) => {
+  const handleSingleChoiceSelect = (questionIndex, answerIndex) => {
     const newSelectedAnswers = [...selectedAnswers];
     newSelectedAnswers[questionIndex] = new Set([answerIndex]);
     setSelectedAnswers(newSelectedAnswers);
   };
 
-  const handleMultipleChoiceSelect = (
-    questionIndex: number,
-    answerIndex: number,
-  ) => {
+  const handleMultipleChoiceSelect = (questionIndex, answerIndex) => {
     const newSelectedAnswers = [...selectedAnswers];
     const selectedSet = new Set(newSelectedAnswers[questionIndex]);
 
@@ -150,47 +97,51 @@ const SecondForm = () => {
     setSelectedAnswers(newSelectedAnswers);
   };
 
-  const handleTextInputChange = (questionIndex: number, text: string) => {
+  const handleTextInputChange = (questionIndex, text) => {
     const newTextInputAnswers = [...textInputAnswers];
     newTextInputAnswers[questionIndex] = text;
     setTextInputAnswers(newTextInputAnswers);
   };
 
   const handleSubmit = async () => {
+    setSubmitting(true);
     try {
-      // Prepare the results, combining both selected and text input answers
-      const result = ServiceData.map((question, index) => ({
+      const result = questions.map((question, index) => ({
         question: question.questionText,
         selectedOptions: question.isTextInput
           ? [textInputAnswers[index]]
-          : Array.from(selectedAnswers[index]).map(i => question.options[i]),
+          : Array.from(selectedAnswers[index]).map(
+            (i) => question.options[i]
+          ),
       }));
 
-      console.log('Form Results:', result);
+      const res = await axios.put(`${BASE_URL}/api/user/${userId}`, { diabetesQuestions: result });
 
-      // Check if there are more goals to process
+      // console.log('Form Results:', res.data);
       if (nextIndex < selectedGoals.length) {
         const nextPage =
           selectedGoals[nextIndex] === 2
             ? 'SecondForm'
             : selectedGoals[nextIndex] === 3
-            ? 'ThirdForm'
-            : 'FirstForm';
+              ? 'ThirdForm'
+              : 'FirstForm';
 
-        navigation.navigate(nextPage as never, {
+        navigation.navigate(nextPage, {
           nextIndex: nextIndex + 1,
           selectedGoals,
           onReturn,
         });
       } else {
-        onReturn(); // Go back to the selection page after the last page
+        onReturn();
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const renderQuestion = (item: any, questionIndex: number) => {
+  const renderQuestion = (item, questionIndex) => {
     if (item.isTextInput) {
       return (
         <TouchableOpacity
@@ -208,10 +159,10 @@ const SecondForm = () => {
             ]}
           />
           <TextInput
-            ref={input => (textInputRefs.current[questionIndex] = input)}
+            ref={(input) => (textInputRefs.current[questionIndex] = input)}
             style={styles.answerTextInput}
             placeholder="Type your answer here"
-            onChangeText={text => handleTextInputChange(questionIndex, text)}
+            onChangeText={(text) => handleTextInputChange(questionIndex, text)}
             value={textInputAnswers[questionIndex]}
             underlineColorAndroid="transparent"
           />
@@ -219,7 +170,7 @@ const SecondForm = () => {
       );
     }
 
-    return item.options.map((answer: string, answerIndex: number) => (
+    return item.options.map((answer, answerIndex) => (
       <TouchableOpacity
         key={answerIndex}
         style={styles.answer}
@@ -234,7 +185,7 @@ const SecondForm = () => {
           style={[
             styles.checkbox,
             {
-              backgroundColor: selectedAnswers[questionIndex].has(answerIndex)
+              backgroundColor: selectedAnswers[questionIndex]?.has(answerIndex)
                 ? '#F6AF24'
                 : 'transparent',
             },
@@ -252,7 +203,7 @@ const SecondForm = () => {
           <Icons.AntDesign name="arrowleft" size={25} color={'black'} />
         </TouchableOpacity>
         <Image source={gsbLogo} />
-        <View style={{width: 25}} />
+        <View style={{ width: 25 }} />
       </View>
 
       <ScrollView
@@ -260,7 +211,7 @@ const SecondForm = () => {
         style={styles.scrollContainer}>
         <Text style={styles.title}>Diabetes</Text>
 
-        {ServiceData.map((item, questionIndex) => (
+        {questions.map((item, questionIndex) => (
           <View key={questionIndex} style={styles.questionContainer}>
             <Text style={styles.question}>{item.questionText}</Text>
             <View style={styles.answersContainer}>
@@ -271,9 +222,12 @@ const SecondForm = () => {
 
         <TouchableOpacity
           onPress={handleSubmit}
-          style={[styles.submitButton, {opacity: isFormComplete ? 1 : 0.5}]}
+          style={[styles.submitButton, { opacity: isFormComplete ? 1 : 0.5 }]}
           disabled={!isFormComplete}>
-          <Text style={styles.submitButtonText}>SUBMIT</Text>
+          {
+            submitting ? <ActivityIndicator color={'white'} /> :
+              <Text style={styles.submitButtonText}>SUBMIT</Text>
+          }
         </TouchableOpacity>
       </ScrollView>
     </View>

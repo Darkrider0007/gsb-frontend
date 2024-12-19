@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -12,10 +12,10 @@ import {
 } from 'react-native';
 import Icons from '../Icons';
 import gsbLogo from '../assets/gsbtransparent.png';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios'; // Import axios
-import {BASE_URL} from '../global/server'; // Ensure BASE_URL is defined correctly
-import {retrieveData} from '../utils/Storage';
+import { BASE_URL } from '../global/server'; // Ensure BASE_URL is defined correctly
+import { retrieveData } from '../utils/Storage';
 
 const Consultant = () => {
   const navigation = useNavigation();
@@ -51,6 +51,7 @@ const Consultant = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('Form Data:', formData);
     try {
       const response = await axios.post(
         `${BASE_URL}/api/consultation/`,
@@ -139,11 +140,12 @@ const Consultant = () => {
             value={formData.phoneNumber}
             onChangeText={text => handleChange('phoneNumber', text)}
             keyboardType="phone-pad"
+            maxLength={10}
           />
 
           <Text style={styles.label}>Message</Text>
           <TextInput
-            style={[styles.input, {height: 100, textAlignVertical: 'top'}]}
+            style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
             placeholder="Enter Message"
             placeholderTextColor={'black'}
             value={formData.message}

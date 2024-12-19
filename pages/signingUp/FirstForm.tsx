@@ -6,15 +6,17 @@ import {
   View,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icons from '../../Icons';
 import gsbLogo from '../../assets/gsbtransparent.png';
-import { completeSignup } from '../../redux/authSlice';
-import { useDispatch } from 'react-redux';
-import { retrieveData, storeData } from '../../utils/Storage';
-import { getData } from '../../global/server';
+import { useDispatch, useSelector } from 'react-redux';
+import { retrieveData } from '../../utils/Storage';
+import { BASE_URL, getData, postData } from '../../global/server';
+import axios from 'axios';
+import { RootState } from '../../redux/store';
 
 // Type definitions for better type safety
 type RootStackParamList = {
@@ -35,108 +37,6 @@ type RootStackParamList = {
   };
 };
 
-const ServiceData = [
-  {
-    questionText: 'Are you suffering from IBS?',
-    options: ['Yes', 'No'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Which type of IBS are you suffering from?',
-    options: ['IBS-C', 'IBS-B', 'IBS-M'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'What Are Your Symptoms?',
-    options: [
-      'Diarrhea',
-      'Constipation',
-      'Gas',
-      'Abdominal Pain',
-      'Mucus with Stool',
-      'Disturbed Sleep Cycle',
-      'Weakness',
-      'Stress',
-      'Anxiety',
-      'Overthinking',
-      'Irritable',
-      'Lack of focus',
-      'Depression',
-      'Weight loss',
-      'Palpitation',
-    ],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'How is the environment of your family?',
-    options: [
-      'Stressful',
-      'Slightly stressful',
-      'Slightly happy',
-      'Normal',
-      'Happy',
-    ],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'How long have you had this problem?',
-    options: [
-      '0-1 years',
-      '1-5 years',
-      '5-10 years',
-      '10-15 years',
-      'More than 15 years',
-    ],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Have you taken any treatment for IBS ?',
-    options: ['Allopathy', 'Homeopathic', 'Ayurvedic', 'Unani', 'None'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Which type of test have you taken?',
-    options: [
-      'Sonography',
-      'Ultrasound',
-      'Endoscopy',
-      'CBC',
-      'LFT',
-      'Thyroid profile',
-      'KFT',
-      'Lipid profile',
-      'Stool Test',
-    ],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'How is your lifestyle?',
-    options: ['Sedentary / very less work ', 'Moderate work', 'Heavy work'],
-    isMultipleChoice: false,
-  },
-  {
-    questionText: 'Are you addicted to any of the following:',
-    options: ['Alcohol', 'Smoking', 'Junk Food', 'Phone', 'Tobacco'],
-    isMultipleChoice: true,
-  },
-  {
-    questionText: 'Do you have any other medical condition?',
-    options: [
-      'Diabetes',
-      'High blood pressure/ Hypertension',
-      'Low blood pressure/ Hypotension',
-      'Heart disease',
-      'Lung disease',
-      'Kidney disease',
-      'Vitamin Deficiency',
-      'Anemia',
-      'Allergy',
-      'PCOD',
-    ],
-    isMultipleChoice: true,
-  },
-];
-
 const FirstForm = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -144,13 +44,13 @@ const FirstForm = () => {
   const route = useRoute();
   const { nextIndex, selectedGoals, onReturn } = route.params || {};
 
-  const [selectedAnswers, setSelectedAnswers] = useState(
-    Array.from({ length: ServiceData.length }, () => new Set()),
-  );
-  const [isFormComplete, setIsFormComplete] = useState(false); // New state
+  const [questions, setQuestions] = useState([]);
+  const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [isFormComplete, setIsFormComplete] = useState(false);
   const [token, setToken] = useState('');
-  const [userId, setUserId] = useState('');
+  const userId = useSelector((state: RootState) => state.auth.user._id);
 
+  const [submitting, setSubmitting] = useState<boolean>(false);
   useEffect(() => {
     const getTokenUserId = async () => {
       try {
@@ -166,24 +66,37 @@ const FirstForm = () => {
   }, []);
 
   useEffect(() => {
-    // Check if all questions are answered
-    const isComplete = selectedAnswers.every(answerSet => answerSet.size > 0);
-    setIsFormComplete(isComplete);
-  }, [selectedAnswers]);
+    const fetchData = async () => {
+      try {
+        const data = await getData('/api/IBSquestions', token);
+        setQuestions(data.questions);
 
-  const handleSingleChoiceSelect = (
-    questionIndex: number,
-    answerIndex: number,
-  ) => {
+        // Initialize selectedAnswers with empty sets for each question
+        setSelectedAnswers(
+          Array.from({ length: data.questions.length }, () => new Set())
+        );
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    // Check if all questions have at least one selected answer
+    if (questions.length > 0) {
+      const isComplete = selectedAnswers.every((answerSet) => answerSet.size > 0);
+      setIsFormComplete(isComplete);
+    }
+  }, [selectedAnswers, questions]);
+
+  const handleSingleChoiceSelect = (questionIndex: number, answerIndex: number) => {
     const newSelectedAnswers = [...selectedAnswers];
     newSelectedAnswers[questionIndex] = new Set([answerIndex]);
     setSelectedAnswers(newSelectedAnswers);
   };
 
-  const handleMultipleChoiceSelect = (
-    questionIndex: number,
-    answerIndex: number,
-  ) => {
+  const handleMultipleChoiceSelect = (questionIndex: number, answerIndex: number) => {
     const newSelectedAnswers = [...selectedAnswers];
     const selectedSet = new Set(newSelectedAnswers[questionIndex]);
 
@@ -198,15 +111,20 @@ const FirstForm = () => {
   };
 
   const handleSubmit = async () => {
+    setSubmitting(true);
     try {
-      const result = ServiceData.map((question, index) => ({
+      const result = questions.map((question, index) => ({
         question: question.questionText,
         selectedOptions: Array.from(selectedAnswers[index]).map(
-          i => question.options[i],
+          (i) => question.options[i]
         ),
       }));
 
-      console.log('Form Results:', result);
+      // console.log('Form Results:', Array.isArray(result));
+
+      const res = await axios.put(`${BASE_URL}/api/user/${userId}`, { ibsQuestions: result });
+
+      // console.log('Response:', res);
 
       if (nextIndex < selectedGoals.length) {
         const nextPage =
@@ -226,6 +144,8 @@ const FirstForm = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -244,7 +164,7 @@ const FirstForm = () => {
         style={styles.scrollContainer}>
         <Text style={styles.title}>IBS Colitis & Crohn's</Text>
 
-        {ServiceData.map((item, questionIndex) => (
+        {questions.map((item, questionIndex) => (
           <View key={questionIndex} style={styles.questionContainer}>
             <Text style={styles.question}>{item.questionText}</Text>
             <View style={styles.answersContainer}>
@@ -263,8 +183,8 @@ const FirstForm = () => {
                     style={[
                       styles.checkbox,
                       {
-                        backgroundColor: selectedAnswers[questionIndex].has(
-                          answerIndex,
+                        backgroundColor: selectedAnswers[questionIndex]?.has(
+                          answerIndex
                         )
                           ? '#F6AF24'
                           : 'transparent',
@@ -281,8 +201,11 @@ const FirstForm = () => {
         <TouchableOpacity
           onPress={handleSubmit}
           style={[styles.submitButton, { opacity: isFormComplete ? 1 : 0.5 }]}
-          disabled={!isFormComplete}>
-          <Text style={styles.submitButtonText}>SUBMIT</Text>
+          disabled={!isFormComplete || submitting}>
+          {
+            submitting ? <ActivityIndicator color={'white'} /> :
+              <Text style={styles.submitButtonText}>SUBMIT</Text>
+          }
         </TouchableOpacity>
       </ScrollView>
     </View>
