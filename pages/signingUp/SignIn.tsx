@@ -22,7 +22,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { signupFailure, signupStart, signupSuccess } from '../../redux/authSlice';
 import { postData } from '../../global/server';
 import { RootState } from '../../redux/store';
-import CarouselCopy from '../../components/CarouselCopy';
+
+import Carousel from '../../components/Carousel';
 
 const SignIn = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -74,7 +75,7 @@ const SignIn = () => {
       />
 
       <View style={{ position: 'relative', height: '100%' }}>
-        <CarouselCopy />
+        <Carousel />
         <View style={styles.bottomContainer}>
           <Text style={styles.sectionTitle}>Email Id</Text>
           <View style={styles.inputContainer}>

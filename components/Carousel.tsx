@@ -188,9 +188,9 @@ const styles = StyleSheet.create({
   logoContainer: {
     position: 'absolute',
     width: '100%',
-    top: '7%',
+    top: '9%',
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    right: 10,
+    right: '85%',
   },
 });
